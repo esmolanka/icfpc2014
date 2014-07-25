@@ -1,30 +1,31 @@
-module Assembler where
+module LispMachine.Instructions where
 
 newtype Address = Address Int
                 deriving (Show, Eq, Ord)
 
-data Commands = LDC Int             -- load constant
-              | LD Int Int          -- load from environment, frame and i'th element of frame
-              | ADD                 -- integer addition
-              | SUB                 -- integer subtraction
-              | MUL                 -- integer multiplication
-              | DIV                 -- integer division
-              | CEQ                 -- compare equal
-              | CGT                 -- compare greater than
-              | CGTE                -- compare greater than or equal
-              | ATOM                -- test if value is an integer
-              | CONS                -- allocate a CONS cell
-              | CAR                 -- extract first element from CONS cell
-              | CDR                 -- extract second element from CONS cell
-              | SEL Address Address -- conditional branch
-              | JOIN                -- return from branch
-              | LDF Address         -- load function
-              | AP Int              -- call function, number of arguments to copy
-              | RTN                 -- return from function call
-              | DUM Int             -- create empty environment frame, size of frame to allocate
-              | RAP Int             -- recursive environment call function, number of arguments to copy
-              | STOP                -- terminate co-processor execution
-              deriving (Show, Eq, Ord)
+data Instruction =
+    LDC Int             -- load constant
+  | LD Int Int          -- load from environment, frame and i'th element of frame
+  | ADD                 -- integer addition
+  | SUB                 -- integer subtraction
+  | MUL                 -- integer multiplication
+  | DIV                 -- integer division
+  | CEQ                 -- compare equal
+  | CGT                 -- compare greater than
+  | CGTE                -- compare greater than or equal
+  | ATOM                -- test if value is an integer
+  | CONS                -- allocate a CONS cell
+  | CAR                 -- extract first element from CONS cell
+  | CDR                 -- extract second element from CONS cell
+  | SEL Address Address -- conditional branch
+  | JOIN                -- return from branch
+  | LDF Address         -- load function
+  | AP Int              -- call function, number of arguments to copy
+  | RTN                 -- return from function call
+  | DUM Int             -- create empty environment frame, size of frame to allocate
+  | RAP Int             -- recursive environment call function, number of arguments to copy
+  | STOP                -- terminate co-processor execution
+    deriving (Show, Eq, Ord)
 
 -- TODO-codes
 -- TSEL - tail-call conditional branch
