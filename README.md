@@ -1,4 +1,9 @@
 icfpc14
 =======
 
-Cofree coriders team.
+CoFree CoRiders team.
+
+Eugene Smolanka
+Sergey Vinokurov
+Ivan Veselov
+Anton Dubovik
