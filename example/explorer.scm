@@ -30,4 +30,4 @@
                     ((non-blocked? wmap down) +down+)
                     ((non-blocked? wmap left) +left+)
                     (#t 42))))
-    (cons 0 (debug-it dir))))
+    (cons 0 dir)))
