@@ -2,6 +2,8 @@
   (map square (list 1 2 3 4 5)))
 
 (define (square x)
+  (debug x)
+  (break)
   (* x x))
 
 (define (map f xs)

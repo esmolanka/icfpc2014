@@ -187,6 +187,7 @@ compileExpr = para alg
       ap $ length args
     alg (Debug (x, _)) =
       x >> dbug
+    alg (Break) = brk
     alg (Reference name) = do
       var  <- isVar name
       func <- isFunc name

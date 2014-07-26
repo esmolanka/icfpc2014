@@ -152,6 +152,10 @@ parseSexp input =
       case rest of
         [x] -> Debug x
         _ -> error $ "invalid debug form: " ++ show form
+    coalg form@(S.List (S.Atom "break": rest)) =
+      case rest of
+        [] -> Break
+        _ -> error $ "invalid break form: " ++ show form
     coalg (S.List (func: rest)) =
       Call func rest
     coalg (S.List []) = error "empty list"
