@@ -123,20 +123,25 @@ parseSexp input =
         _ -> error $ "invalid atom? form: " ++ show form
     coalg (S.List (S.Atom "list": rest)) =
       List rest
-    coalg (S.List (S.Atom "begin": rest)) =
-      Begin rest
+    coalg form@(S.List (S.Atom "begin": rest)) =
+      -- Begin rest
+      case rest of
+        _ :_ -> Begin rest
+        [] -> error $ "invalid begin form, at least one body statement expected: " ++ show form
     coalg form@(S.List (S.Atom "make-closure": rest)) =
       case rest of
         [S.Atom x] -> MakeClosure $ mkSymbol x
         _ -> error $ "invalid make-closure form: " ++ show form
     coalg (S.List (func: rest)) =
-      Call func rest
+      case func of
+        S.Atom name -> StaticCall (mkSymbol name) rest
+        _           -> Call func rest
     coalg (S.List []) = error "empty list"
 
-    coalg (S.Atom "#t") = Constant $ Fix $ LiteralBool True
-    coalg (S.Atom "#f") = Constant $ Fix $ LiteralBool False
+    coalg (S.Atom "#t") = Constant $ LiteralBool True
+    coalg (S.Atom "#f") = Constant $ LiteralBool False
     coalg (S.Atom name)
-      | BS.all isDigit name = Constant $ Fix $ LiteralInt $ read $ BS.unpack name
+      | BS.all isDigit name = Constant $ LiteralInt $ read $ BS.unpack name
       | otherwise = Reference $ mkSymbol name
 
 validateSchemeProg :: SchemeProg -> Either String SchemeProg

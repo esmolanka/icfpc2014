@@ -1,3 +1,5 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TupleSections              #-}
 
 module LispMachine.Gen where
 
@@ -11,9 +13,9 @@ import LispMachine.Print
 
 data GenState = GenState
     { lastLabelId :: Int
-    } deriving (Show)
+    } deriving (Show, Eq, Ord)
 
-data RRef = RRef Text Int deriving (Show)
+data RRef = RRef Text Int deriving (Show, Eq, Ord)
 
 toLabel :: RRef -> Label
 toLabel (RRef name i) = "lbl_" ++ T.unpack name ++ "_" ++ show i
@@ -21,13 +23,16 @@ toLabel (RRef name i) = "lbl_" ++ T.unpack name ++ "_" ++ show i
 toRefLabel :: RRef -> Ref
 toRefLabel = Ref . toLabel
 
-type GenM env = RWST env [Statement] GenState (Either String)
+newtype CondBlock = CondBlock { getCondBlock :: [Statement] }
+                  deriving (Show, Eq, Ord, Monoid)
+
+type GenM env = RWST env ([Statement], [CondBlock]) GenState (Either String)
 
 putI :: Instruction Ref -> GenM e ()
-putI = tell . (:[]) . Instr
+putI = tell . (, mempty) . (:[]) . Instr
 
 putLabel :: RRef -> GenM e ()
-putLabel = tell . (:[]) . SetLabel . toLabel
+putLabel = tell . (, mempty) . (:[]) . SetLabel . toLabel
 
 ldc :: Int -> GenM e ()
 ldc x = putI $ LDC x
@@ -124,6 +129,20 @@ block ref gen = do
   putLabel ref
   gen
 
+condBlock :: RRef -> GenM e a -> GenM e a
+condBlock ref gen =
+  censor toCondBlock $ do
+    putLabel ref
+    gen
+  where
+    toCondBlock :: ([Statement], [CondBlock]) -> ([Statement], [CondBlock])
+    toCondBlock res@([], _) = res
+    toCondBlock (xs, ys)
+      | last xs /= Instr JOIN =
+        error $ "conditional block does not end in JOIN:\n" ++ show xs
+      | otherwise             =
+        (mempty, ys ++ [CondBlock xs])
+
 initEnv :: ()
 initEnv = ()
 
@@ -131,8 +150,9 @@ initState :: GenState
 initState = GenState { lastLabelId = 0 }
 
 genProgram :: e -> GenM e () -> Either String Program
-genProgram initEnv gen = fmap (Program . thrd) $ runRWST gen initEnv initState
-    where thrd (_,_,x) = x
+genProgram initEnv gen = fmap (Program . f) $ runRWST gen initEnv initState
+    where
+      f (_, _, (stms, condBlocks)) = stms ++ concatMap getCondBlock condBlocks
 
 genToString :: e -> GenM e () -> String
 genToString initEnv = either error showProgram . (flatten <=< genProgram initEnv)

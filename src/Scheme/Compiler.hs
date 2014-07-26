@@ -1,10 +1,11 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module Scheme.Compiler where
 
--- import Control.Applicative
+import Control.Applicative
 import Control.Monad.Reader hiding (ap, join)
 -- import Control.Monad.Error
 -- import Control.Monad.State
@@ -12,6 +13,7 @@ import Control.Monad.Reader hiding (ap, join)
 import Data.List
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe
 -- import Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy as T
 
@@ -28,7 +30,13 @@ newtype Frame = Frame { getFrame :: Map Symbol Int }
 newtype Env = Env { getEnv :: [Frame] }
             deriving (Show, Eq, Ord)
 
-type CompileM a = GenM Env a
+data CompileEnv = CompileEnv
+                { variableEnv :: Env
+                , functionEnv :: Map Symbol RRef
+                }
+                deriving (Show, Eq, Ord)
+
+type CompileM a = GenM CompileEnv a
 -- newtype CompileM a = CompileM { runCompileM :: GenM Env a }
 --                    deriving ( Functor
 --                             , Applicative
@@ -45,13 +53,20 @@ mkFrame args = Frame $ M.fromList $ zip args [0..]
 withFrameForArgs :: [Symbol] -> CompileM a -> CompileM a
 withFrameForArgs args action = local (addFrame (mkFrame args)) action
   where
-    addFrame frame (Env frames) = Env $ frame: frames
+    addFrame frame compileEnv@(CompileEnv (Env frames) _) =
+      compileEnv { variableEnv = (Env $ frame: frames) }
+
+functionLabel :: Symbol -> CompileM RRef
+functionLabel name = do
+  funcEnv <- asks functionEnv
+  maybe (error $ "unresolved function name: " ++ show (getSymbol name)) return $
+    M.lookup name funcEnv
 
 -- Returns Nth frame in environment chain where ref is bound and location
 -- inside that frame.
-resolveRef :: Symbol -> CompileM (Int, Int)
-resolveRef ref = do
-  frames <- asks getEnv
+resolveVar :: Symbol -> CompileM (Int, Int)
+resolveVar ref = do
+  frames <- asks (getEnv . variableEnv)
   return $ go frames frames 0
   where
     go :: [Frame] -> [Frame] -> Int -> (Int, Int)
@@ -61,13 +76,24 @@ resolveRef ref = do
     go frames (f:fs) n =
       maybe (go frames fs $ n + 1) (\k -> (n, k)) $ M.lookup ref $ getFrame f
 
+isVar :: Symbol -> CompileM Bool
+isVar name = do
+  frames <- asks (getEnv . variableEnv)
+  return $ any (M.member name . getFrame) frames
+
+isFunc :: Symbol -> CompileM Bool
+isFunc name = M.member name <$> asks functionEnv
+
 compileProg :: SchemeProg -> Either String Program
 compileProg prog =
-  genProgram (Env []) $ do
-    compileFunc mainFunc
-    mapM_ compileFunc otherFuncs
+  genProgram (CompileEnv (Env []) (error "funcEnv not initialized")) $ do
+    labels <- mapM (\name -> (name, ) <$> mkNamedLabel (getSymbol name)) otherNames
+    local (\compEnv -> compEnv { functionEnv = M.fromList labels }) $ do
+      compileFunc mainFunc
+      mapM_ compileFunc otherFuncs
   where
     ([mainFunc], otherFuncs) = partition ((== Symbol "main") . defName) prog
+    otherNames = map defName otherFuncs
 
 -- (define (main world undocumented)
 --   (cons initial-state (make-closure step)))
@@ -77,15 +103,17 @@ compileProg prog =
 --   (cons (cons 0 world) (make-closure step)))
 
 compileFunc :: Definition -> CompileM ()
--- compileFunc (Define (Symbol "main") [worldArg, undocumentedArg] body) = do
---   compileExpr body
---   rtn
+compileFunc (Define (Symbol "main") args body) = do
+  withFrameForArgs args $ do
+    mapM_ compileExpr body
+    rtn
 compileFunc (Define name args body) = do
-  label <- mkNamedLabel $ getSymbol name
+  -- label <- mkNamedLabel $ getSymbol name
+  label <- functionLabel name
   block label $
-    withFrameForArgs args $
+    withFrameForArgs args $ do
       mapM_ compileExpr body
-  rtn
+      rtn
 
 compileExpr :: Sexp -> CompileM ()
 compileExpr = para alg
@@ -99,8 +127,7 @@ compileExpr = para alg
     alg (Cdr (x, _)) =
       x >> cdr
     alg (Add (x, _) (y, _)) =
-      x >> y >>
-        -- data stack must contain two items after this
+      x >> y >> -- data stack must contain two items after this!
         add
     alg (Sub (x, _) (y, _)) =
       x >> y >> sub
@@ -110,7 +137,7 @@ compileExpr = para alg
       x >> y >> div
     alg (Assign ref (x, _)) = do
       x -- x must store to data stack!
-      (n, k) <- resolveRef ref
+      (n, k) <- resolveVar ref
       st n k
     alg (Let bindings body) = do
       -- handle let as usual in scheme:
@@ -134,7 +161,7 @@ compileExpr = para alg
       -- label <- mkNamedLabel $ getSymbol "let_body"
       -- withFrameForArgs (map fst bindings) $ do
       --   dum $ length bindings
-      --   mapM_ (\(var, (initExpr, _)) -> initExpr >> resolveRef var >>= uncurry st)
+      --   mapM_ (\(var, (initExpr, _)) -> initExpr >> resolveVar var >>= uncurry st)
       --         bindings
       --   block label
       --         body
@@ -143,8 +170,8 @@ compileExpr = para alg
       falseLabel <- mkNamedLabel "false_br"
       c
       sel trueLabel falseLabel
-      block trueLabel (t >> join)
-      block falseLabel (f >> join)
+      condBlock trueLabel (t >> join)
+      condBlock falseLabel (f >> join)
     alg (Cmp op (x, _) (y, _)) = do
       x
       y
@@ -152,12 +179,37 @@ compileExpr = para alg
         CmpEq -> ceq
         CmpGt -> cgt
         CmpGe -> cgte
-    alg (Reference var) = do
-      (n, k) <- resolveRef var
-      ld n k
-    alg (Constant (Fix (LiteralInt n))) = do
+    alg (IsAtom (x, _)) =
+      x >> atom
+    alg (List xs) =
+      foldr (\head tail -> head >> tail >> cons) (ldc 0) $ map fst xs
+    alg (Begin xs) =
+      sequence_ $ map fst xs
+    alg (MakeClosure name) =
+      functionLabel name >>= ldf
+    alg (StaticCall name args) = do
+      mapM_ fst args -- args must add something on data stack! <=> no args can be Assign node, for example
+      label <- functionLabel name
+      ldf label
+      ap $ length args
+    alg (Call (x, _) args) = do
+      mapM_ fst args
+      x -- x must add closure cell on the stack
+      ap $ length args
+    alg (Reference name) = do
+      var  <- isVar name
+      func <- isFunc name
+      -- structured-haskell-mode cannot handle multiway ifs, inconvenient
+      case () of
+        _ | var -> do
+              (n, k) <- resolveVar name
+              ld n k
+          | func -> do
+            functionLabel name >>= ldf
+          | otherwise -> error $ "unresolved reference: " ++ show (getSymbol name)
+    alg (Constant (LiteralInt n)) = do
       ldc n
-    alg (Constant (Fix (LiteralBool b))) = do
+    alg (Constant (LiteralBool b)) = do
       ldc $ if b then 1 else 0
     alg x = error $ show (fmap snd x) ++ " form not supported yet"
     -- alg (Cons x y)   = do

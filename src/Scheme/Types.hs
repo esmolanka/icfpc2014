@@ -18,11 +18,10 @@ data CmpOp = CmpEq
            | CmpGe
            deriving (Show, Eq, Ord)
 
-data Literal f = LiteralInt Int
-               | LiteralBool Bool
-               | LiteralCons f f
-               | LiteralClosure Symbol -- cannot be directly parsed from source
-               deriving (Show, Eq, Ord)
+data Literal = LiteralInt Int
+             | LiteralBool Bool
+             | LiteralClosure Symbol -- cannot be directly parsed from source
+             deriving (Show, Eq, Ord)
 
 data SexpF f = -- Define Symbol [Symbol] f
                Lambda [Symbol] f -- must be lifted
@@ -40,11 +39,13 @@ data SexpF f = -- Define Symbol [Symbol] f
              | IsAtom f
              | List [f]
              | Begin [f]
-             | MakeClosure Symbol
+             | MakeClosure Symbol -- symbol must be a function name
+             | StaticCall Symbol [f] -- call to known function
              | Call f [f]
+             | TailCall Symbol [f] -- will be introduced by transformation
              | Reference Symbol
              -- | Quote f
-             | Constant (Fix Literal)
+             | Constant Literal
              deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Sexp = Fix SexpF
