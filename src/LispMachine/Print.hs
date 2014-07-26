@@ -12,7 +12,7 @@ showProgram :: FlatProgram -> String
 showProgram x = displayS (renderPretty 0.4 80 (ppFlatProgram x)) ""
 
 ppFlatProgram :: FlatProgram -> Doc
-ppFlatProgram (FlatProgram instrs) = vcat . map ppInstr $ instrs
+ppFlatProgram (FlatProgram instrs) = vcat . map ppAnnotatedInstr $ instrs
 
 instr :: Doc -> Doc
 instr = fill 4
@@ -28,6 +28,10 @@ ppComment txt = toCol 15 (semi <+> txt)
 
 toCol :: Int -> Doc -> Doc
 toCol n t = column (\c -> if c < n then text (replicate (n-c) ' ') <> t else t)
+
+ppAnnotatedInstr :: AnnotatedInstruction -> Doc
+ppAnnotatedInstr (AnnotatedInstruction i (Just ann)) = vcat [ semi <+> text ann <> colon, indent 2 $ ppInstr i ]
+ppAnnotatedInstr (AnnotatedInstruction i Nothing) = indent 2 $ ppInstr i
 
 ppInstr :: Instruction AnnotatedAddr -> Doc
 ppInstr (LDC c)   = instr "LDC"  <+> int c
@@ -60,9 +64,9 @@ ppInstr BRK       = instr "BRK"
 
 _test :: FlatProgram
 _test = FlatProgram
-   [ SEL (AnnotatedAddr (Addr 1) Nothing) (AnnotatedAddr (Addr 1000) Nothing)
-   , LD 10 20
-   , ADD
-   , LDF (AnnotatedAddr (Addr 10) (Just "foo"))
+   [ AnnotatedInstruction (SEL (AnnotatedAddr (Addr 1) Nothing) (AnnotatedAddr (Addr 1000) Nothing)) Nothing
+   , AnnotatedInstruction (LD 10 20) (Just "lbl1")
+   , AnnotatedInstruction (ADD) Nothing
+   , AnnotatedInstruction (LDF (AnnotatedAddr (Addr 10) (Just "foo"))) Nothing
    ]
 

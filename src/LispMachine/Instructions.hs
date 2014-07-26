@@ -25,7 +25,12 @@ data Statement = SetLabel Label
 
 newtype Program = Program [Statement] deriving (Show)
 
-newtype FlatProgram = FlatProgram [Instruction AnnotatedAddr] deriving (Show)
+data AnnotatedInstruction = AnnotatedInstruction
+    { aInstr :: Instruction AnnotatedAddr
+    , aAnnotation :: Maybe String
+    } deriving (Show)
+
+newtype FlatProgram = FlatProgram [AnnotatedInstruction] deriving (Show)
 
 data Instruction a =
     LDC Int             -- load constant, args: constant

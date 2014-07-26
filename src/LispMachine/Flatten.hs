@@ -4,9 +4,7 @@ module LispMachine.Flatten
     ) where
 
 import Control.Applicative
-import Control.Monad
 import qualified Data.Map as M
-import Data.Maybe
 import Data.List
 
 import qualified Data.Traversable as Tr
@@ -16,7 +14,7 @@ import LispMachine.Instructions
 import Utils.Utils
 
 flatten :: Program -> Either String FlatProgram
-flatten (Program lst) = FlatProgram . concat <$> mapM deref lst
+flatten (Program lst) = FlatProgram . concat <$> (sequence . snd . Tr.mapAccumL deref Nothing $ lst)
     where
       refs :: M.Map Ref Addr
       refs = snd . foldl' gather (0, M.empty) $ lst
@@ -24,11 +22,12 @@ flatten (Program lst) = FlatProgram . concat <$> mapM deref lst
       gather (!offset, m) (SetLabel lbl) = (offset, M.insert (Ref lbl) (Addr offset) m)
       gather (!offset, m) (Instr _)      = (offset + 1, m)
 
-      deref :: Statement -> Either String [ Instruction AnnotatedAddr ]
-      deref (SetLabel _) = return []
-      deref (Instr i)    = do
-        i <- Tr.sequence $ lookupRef `fmap` i
-        return [ i ]
+      deref :: Maybe String -> Statement -> (Maybe String, Either String [ AnnotatedInstruction ])
+      deref _   (SetLabel lbl)   = (Just lbl, return [])
+      deref ann (Instr i)        = (Nothing, resolvedI)
+          where resolvedI = do
+                  i <- Tr.sequence $ lookupRef `fmap` i
+                  return [ AnnotatedInstruction i ann ]
 
       lookupRef :: Ref -> Either String AnnotatedAddr
       lookupRef ref@(Ref lbl) = do
