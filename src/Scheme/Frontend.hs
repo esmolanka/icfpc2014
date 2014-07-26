@@ -38,9 +38,9 @@ parseSexp input =
       error $ "atomToSymbol: expected symbol but got list: " ++ show list
 
     mkDef :: S.Sexp -> Definition
-    mkDef = fmap mkExpr . defCoalg
+    mkDef = fmap (map mkExpr) . defCoalg
 
-    defCoalg :: S.Sexp -> DefinitionF S.Sexp
+    defCoalg :: S.Sexp -> DefinitionF [S.Sexp]
     defCoalg form@(S.List (S.Atom "define": rest)) =
       case rest of
         -- constant, but looks like
@@ -234,7 +234,7 @@ desugar prog =
         alg form         = Fix form
 
 optimize :: SchemeProg -> SchemeProg
-optimize = map (fmap optimizeExpr)
+optimize = map (fmap (map optimizeExpr))
   where
     optimizeExpr :: Sexp -> Sexp
     optimizeExpr = cata alg
