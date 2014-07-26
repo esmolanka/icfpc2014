@@ -139,8 +139,8 @@ compileExpr = para alg
       --   block label
       --         body
     alg (If (c, _) (t, _) (f, _)) = do
-      trueLabel <- mkNamedLabel "true_branch"
-      falseLabel <- mkNamedLabel "false_branch"
+      trueLabel <- mkNamedLabel "true_br"
+      falseLabel <- mkNamedLabel "false_br"
       c
       sel trueLabel falseLabel
       block trueLabel (t >> join)

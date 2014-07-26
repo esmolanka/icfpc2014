@@ -21,7 +21,7 @@ ppAddr :: AnnotatedAddr -> Doc
 ppAddr (aAddr -> (Addr n)) = pretty n
 
 ppLabel :: AnnotatedAddr -> Doc
-ppLabel (aLabel -> str) = maybe "#" text str
+ppLabel (aLabel -> str) = maybe "#" (("@"<>) . text) str
 
 ppComment :: Doc -> Doc
 ppComment txt = toCol 15 (semi <+> txt)
@@ -48,15 +48,15 @@ ppInstr ATOM      = instr "ATOM"
 ppInstr CONS      = instr "CONS"
 ppInstr CAR       = instr "CAR"
 ppInstr CDR       = instr "CDR"
-ppInstr (SEL t f) = instr "SEL"  <+> ppAddr t <+> ppAddr f <+> ppComment (ppLabel t <+> ppLabel f)
+ppInstr (SEL t f) = instr "SEL"  <+> ppAddr t <+> ppAddr f <+> ppComment ("branch to" <+> ppLabel t <+> "otherwise" <+> ppLabel f)
 ppInstr JOIN      = instr "JOIN"
-ppInstr (LDF f)   = instr "LDF"  <+> ppAddr f <+> ppComment (ppLabel f)
+ppInstr (LDF f)   = instr "LDF"  <+> ppAddr f <+> ppComment ("load fun" <+> ppLabel f)
 ppInstr (AP n)    = instr "AP"   <+> int n
 ppInstr RTN       = instr "RTN"
 ppInstr (DUM n)   = instr "DUM"  <+> int n
 ppInstr (RAP n)   = instr "RAP"  <+> int n
 ppInstr STOP      = instr "STOP"
-ppInstr (TSEL t f)= instr "TSEL" <+> ppAddr t <+> ppAddr f <+> ppComment (ppLabel t <+> ppLabel f)
+ppInstr (TSEL t f)= instr "TSEL" <+> ppAddr t <+> ppAddr f <+> ppComment ("... then" <+> ppLabel t <+> "else" <+> ppLabel f)
 ppInstr (TAP n)   = instr "TAP"  <+> int n
 ppInstr (TRAP n)  = instr "TRAP" <+> int n
 ppInstr DBUG      = instr "DBUG"
