@@ -1,0 +1,572 @@
+  LDC  0
+  LDF  36      ; load fun @lbl_step_5
+  CONS
+  RTN
+; lbl_get-up_1:
+  LD   0 0
+  CAR
+  LDC  1
+  SUB
+  LD   0 0
+  CDR
+  CONS
+  RTN
+; lbl_get-down_2:
+  LD   0 0
+  CAR
+  LDC  1
+  ADD
+  LD   0 0
+  CDR
+  CONS
+  RTN
+; lbl_get-left_3:
+  LD   0 0
+  CAR
+  LD   0 0
+  CDR
+  LDC  1
+  SUB
+  CONS
+  RTN
+; lbl_get-right_4:
+  LD   0 0
+  CAR
+  LD   0 0
+  CDR
+  LDC  1
+  ADD
+  CONS
+  RTN
+; lbl_step_5:
+  LD   0 1
+  LDF  111     ; load fun @lbl_world-map_20
+  AP   1
+  LDF  369     ; load fun @lbl_let_body_47
+  AP   1
+  RTN
+; lbl_first_6:
+  LD   0 0
+  CAR
+  RTN
+; lbl_second_7:
+  LD   0 0
+  CDR
+  CAR
+  RTN
+; lbl_third_8:
+  LD   0 0
+  CDR
+  CDR
+  CAR
+  RTN
+; lbl_fourth_9:
+  LD   0 0
+  CDR
+  CDR
+  CDR
+  CAR
+  RTN
+; lbl_fifth_10:
+  LD   0 0
+  CDR
+  CDR
+  CDR
+  CDR
+  CAR
+  RTN
+; lbl_nth_11:
+  LD   0 0
+  LDC  0
+  CEQ
+  SEL  375 378 ; branch to @lbl_true_br_73 otherwise @lbl_false_br_74
+  RTN
+; lbl_swap_12:
+  LD   0 0
+  CDR
+  LD   0 0
+  CAR
+  CONS
+  RTN
+; lbl_nil?_13:
+  LD   0 0
+  ATOM
+  SEL  386 390 ; branch to @lbl_true_br_75 otherwise @lbl_false_br_76
+  RTN
+; lbl_match_14:
+  LD   0 0
+  LDF  78      ; load fun @lbl_nil?_13
+  AP   1
+  SEL  392 394 ; branch to @lbl_true_br_77 otherwise @lbl_false_br_78
+  RTN
+; lbl_map_15:
+  LD   0 1
+  LDF  78      ; load fun @lbl_nil?_13
+  AP   1
+  SEL  401 403 ; branch to @lbl_true_br_79 otherwise @lbl_false_br_80
+  RTN
+; lbl_filter_16:
+  LD   0 1
+  LDF  78      ; load fun @lbl_nil?_13
+  AP   1
+  SEL  414 431 ; branch to @lbl_true_br_81 otherwise @lbl_false_br_82
+  RTN
+; lbl_foldr_17:
+  LD   0 2
+  LDF  78      ; load fun @lbl_nil?_13
+  AP   1
+  SEL  437 439 ; branch to @lbl_true_br_85 otherwise @lbl_false_br_86
+  RTN
+; lbl_length_18:
+  LD   0 0
+  LDF  78      ; load fun @lbl_nil?_13
+  AP   1
+  SEL  450 452 ; branch to @lbl_true_br_87 otherwise @lbl_false_br_88
+  RTN
+; lbl_debug-it_19:
+  LD   0 0
+  DBUG
+  LD   0 0
+  RTN
+; lbl_world-map_20:
+  LD   0 0
+  LDF  42      ; load fun @lbl_first_6
+  AP   1
+  RTN
+; lbl_lm-status_21:
+  LD   0 0
+  LDF  45      ; load fun @lbl_second_7
+  AP   1
+  RTN
+; lbl_ghost-status_22:
+  LD   0 0
+  LDF  49      ; load fun @lbl_third_8
+  AP   1
+  RTN
+; lbl_fruit-status_23:
+  LD   0 0
+  LDF  54      ; load fun @lbl_fourth_9
+  AP   1
+  RTN
+; lbl_map-cell_24:
+  LD   0 1
+  CDR
+  LD   0 1
+  CAR
+  LD   0 0
+  LDF  67      ; load fun @lbl_nth_11
+  AP   2
+  LDF  67      ; load fun @lbl_nth_11
+  AP   2
+  RTN
+; lbl_wall?_25:
+  LDC  0
+  LD   0 0
+  LD   0 1
+  LDF  127     ; load fun @lbl_map-cell_24
+  AP   2
+  CEQ
+  RTN
+; lbl_empty?_26:
+  LDC  1
+  LD   0 0
+  LD   0 1
+  LDF  127     ; load fun @lbl_map-cell_24
+  AP   2
+  CEQ
+  RTN
+; lbl_pill?_27:
+  LDC  2
+  LD   0 0
+  LD   0 1
+  LDF  127     ; load fun @lbl_map-cell_24
+  AP   2
+  CEQ
+  RTN
+; lbl_power-pill?_28:
+  LDC  3
+  LD   0 0
+  LD   0 1
+  LDF  127     ; load fun @lbl_map-cell_24
+  AP   2
+  CEQ
+  RTN
+; lbl_fruit?_29:
+  LDC  4
+  LD   0 0
+  LD   0 1
+  LDF  127     ; load fun @lbl_map-cell_24
+  AP   2
+  CEQ
+  RTN
+; lbl_lman-start?_30:
+  LDC  5
+  LD   0 0
+  LD   0 1
+  LDF  127     ; load fun @lbl_map-cell_24
+  AP   2
+  CEQ
+  RTN
+; lbl_ghost-start?_31:
+  LDC  6
+  LD   0 0
+  LD   0 1
+  LDF  127     ; load fun @lbl_map-cell_24
+  AP   2
+  CEQ
+  RTN
+; lbl_useful?_32:
+  LD   0 0
+  LD   0 1
+  LDF  151     ; load fun @lbl_pill?_27
+  AP   2
+  SEL  459 468 ; branch to @lbl_true_br_89 otherwise @lbl_false_br_90
+  RTN
+; lbl_non-blocked?_33:
+  LDC  0
+  LD   0 0
+  LD   0 1
+  LDF  127     ; load fun @lbl_map-cell_24
+  AP   2
+  CEQ
+  SEL  474 476 ; branch to @lbl_true_br_93 otherwise @lbl_false_br_94
+  RTN
+; lbl_map-size_34:
+  LD   0 0
+  LDF  102     ; load fun @lbl_length_18
+  AP   1
+  LD   0 0
+  CAR
+  LDF  102     ; load fun @lbl_length_18
+  AP   1
+  CONS
+  RTN
+; lbl_lm-vitality_35:
+  LD   0 0
+  LDF  42      ; load fun @lbl_first_6
+  AP   1
+  RTN
+; lbl_lm-location_36:
+  LD   0 0
+  LDF  45      ; load fun @lbl_second_7
+  AP   1
+  RTN
+; lbl_lm-direction_37:
+  LD   0 0
+  LDF  49      ; load fun @lbl_third_8
+  AP   1
+  RTN
+; lbl_lm-lives_38:
+  LD   0 0
+  LDF  54      ; load fun @lbl_fourth_9
+  AP   1
+  RTN
+; lbl_lm-score_39:
+  LD   0 0
+  LDF  60      ; load fun @lbl_fifth_10
+  AP   1
+  RTN
+; lbl_gh-no_40:
+  LD   0 0
+  LD   0 1
+  LDF  67      ; load fun @lbl_nth_11
+  AP   2
+  RTN
+; lbl_gh-vitality_41:
+  LD   0 0
+  LDF  42      ; load fun @lbl_first_6
+  AP   1
+  RTN
+; lbl_gh-location_42:
+  LD   0 0
+  LDF  45      ; load fun @lbl_second_7
+  AP   1
+  RTN
+; lbl_gh-direction_43:
+  LD   0 0
+  LDF  49      ; load fun @lbl_third_8
+  AP   1
+  RTN
+; lbl_gh-standard?_44:
+  LDC  0
+  LD   0 0
+  CEQ
+  RTN
+; lbl_gh-frightened?_45:
+  LDC  1
+  LD   0 0
+  CEQ
+  RTN
+; lbl_gh-invisible?_46:
+  LDC  2
+  LD   0 0
+  CEQ
+  RTN
+; lbl_true_br_55:
+  LDC  0
+  JOIN
+; lbl_true_br_57:
+  LDC  2
+  JOIN
+; lbl_true_br_59:
+  LDC  3
+  JOIN
+; lbl_true_br_61:
+  LDC  1
+  JOIN
+; lbl_true_br_63:
+  LDC  0
+  JOIN
+; lbl_true_br_65:
+  LDC  2
+  JOIN
+; lbl_true_br_67:
+  LDC  3
+  JOIN
+; lbl_true_br_69:
+  LDC  1
+  JOIN
+; lbl_true_br_71:
+  LDC  42
+  JOIN
+; lbl_false_br_72:
+  LDC  0
+  JOIN
+; lbl_false_br_70:
+  LDC  1
+  SEL  274 276 ; branch to @lbl_true_br_71 otherwise @lbl_false_br_72
+  JOIN
+; lbl_false_br_68:
+  LD   6 0
+  LD   0 0
+  LDF  192     ; load fun @lbl_non-blocked?_33
+  AP   2
+  SEL  272 278 ; branch to @lbl_true_br_69 otherwise @lbl_false_br_70
+  JOIN
+; lbl_false_br_66:
+  LD   6 0
+  LD   1 0
+  LDF  192     ; load fun @lbl_non-blocked?_33
+  AP   2
+  SEL  270 281 ; branch to @lbl_true_br_67 otherwise @lbl_false_br_68
+  JOIN
+; lbl_false_br_64:
+  LD   6 0
+  LD   2 0
+  LDF  192     ; load fun @lbl_non-blocked?_33
+  AP   2
+  SEL  268 287 ; branch to @lbl_true_br_65 otherwise @lbl_false_br_66
+  JOIN
+; lbl_false_br_62:
+  LD   6 0
+  LD   3 0
+  LDF  192     ; load fun @lbl_non-blocked?_33
+  AP   2
+  SEL  266 293 ; branch to @lbl_true_br_63 otherwise @lbl_false_br_64
+  JOIN
+; lbl_false_br_60:
+  LD   6 0
+  LD   0 0
+  LDF  186     ; load fun @lbl_useful?_32
+  AP   2
+  SEL  264 299 ; branch to @lbl_true_br_61 otherwise @lbl_false_br_62
+  JOIN
+; lbl_false_br_58:
+  LD   6 0
+  LD   1 0
+  LDF  186     ; load fun @lbl_useful?_32
+  AP   2
+  SEL  262 305 ; branch to @lbl_true_br_59 otherwise @lbl_false_br_60
+  JOIN
+; lbl_false_br_56:
+  LD   6 0
+  LD   2 0
+  LDF  186     ; load fun @lbl_useful?_32
+  AP   2
+  SEL  260 311 ; branch to @lbl_true_br_57 otherwise @lbl_false_br_58
+  JOIN
+; lbl_let_body_54:
+  LDC  0
+  LD   0 0
+  LDF  107     ; load fun @lbl_debug-it_19
+  AP   1
+  CONS
+  RTN
+; lbl_let_body_53:
+  LD   6 0
+  LD   3 0
+  LDF  186     ; load fun @lbl_useful?_32
+  AP   2
+  SEL  258 317 ; branch to @lbl_true_br_55 otherwise @lbl_false_br_56
+  LDF  323     ; load fun @lbl_let_body_54
+  AP   1
+  RTN
+; lbl_let_body_52:
+  LD   3 0
+  LDF  28      ; load fun @lbl_get-right_4
+  AP   1
+  LDF  329     ; load fun @lbl_let_body_53
+  AP   1
+  RTN
+; lbl_let_body_51:
+  LD   2 0
+  LDF  20      ; load fun @lbl_get-left_3
+  AP   1
+  LDF  337     ; load fun @lbl_let_body_52
+  AP   1
+  RTN
+; lbl_let_body_50:
+  LD   1 0
+  LDF  12      ; load fun @lbl_get-down_2
+  AP   1
+  LDF  343     ; load fun @lbl_let_body_51
+  AP   1
+  RTN
+; lbl_let_body_49:
+  LD   0 0
+  LDF  4       ; load fun @lbl_get-up_1
+  AP   1
+  LDF  349     ; load fun @lbl_let_body_50
+  AP   1
+  RTN
+; lbl_let_body_48:
+  LD   0 0
+  LDF  213     ; load fun @lbl_lm-location_36
+  AP   1
+  LDF  72      ; load fun @lbl_swap_12
+  AP   1
+  LDF  355     ; load fun @lbl_let_body_49
+  AP   1
+  RTN
+; lbl_let_body_47:
+  LD   1 1
+  LDF  115     ; load fun @lbl_lm-status_21
+  AP   1
+  LDF  361     ; load fun @lbl_let_body_48
+  AP   1
+  RTN
+; lbl_true_br_73:
+  LD   0 1
+  CAR
+  JOIN
+; lbl_false_br_74:
+  LD   0 0
+  LDC  1
+  SUB
+  LD   0 1
+  CDR
+  LDF  67      ; load fun @lbl_nth_11
+  AP   2
+  JOIN
+; lbl_true_br_75:
+  LD   0 0
+  LDC  0
+  CEQ
+  JOIN
+; lbl_false_br_76:
+  LDC  0
+  JOIN
+; lbl_true_br_77:
+  LD   0 1
+  JOIN
+; lbl_false_br_78:
+  LD   0 0
+  CAR
+  LD   0 0
+  CDR
+  LD   0 2
+  AP   2
+  JOIN
+; lbl_true_br_79:
+  LDC  0
+  JOIN
+; lbl_false_br_80:
+  LD   0 1
+  CAR
+  LD   0 0
+  AP   1
+  LD   0 0
+  LD   0 1
+  CDR
+  LDF  87      ; load fun @lbl_map_15
+  AP   2
+  CONS
+  JOIN
+; lbl_true_br_81:
+  LDC  0
+  JOIN
+; lbl_true_br_83:
+  LD   0 1
+  CAR
+  LD   0 0
+  LD   0 1
+  CDR
+  LDF  92      ; load fun @lbl_filter_16
+  AP   2
+  CONS
+  JOIN
+; lbl_false_br_84:
+  LD   0 0
+  LD   0 1
+  CDR
+  LDF  92      ; load fun @lbl_filter_16
+  AP   2
+  JOIN
+; lbl_false_br_82:
+  LD   0 1
+  CAR
+  LD   0 0
+  AP   1
+  SEL  416 425 ; branch to @lbl_true_br_83 otherwise @lbl_false_br_84
+  JOIN
+; lbl_true_br_85:
+  LD   0 1
+  JOIN
+; lbl_false_br_86:
+  LD   0 2
+  CAR
+  LD   0 0
+  LD   0 1
+  LD   0 2
+  CDR
+  LDF  97      ; load fun @lbl_foldr_17
+  AP   3
+  LD   0 0
+  AP   2
+  JOIN
+; lbl_true_br_87:
+  LDC  0
+  JOIN
+; lbl_false_br_88:
+  LDC  1
+  LD   0 0
+  CDR
+  LDF  102     ; load fun @lbl_length_18
+  AP   1
+  ADD
+  JOIN
+; lbl_true_br_89:
+  LDC  1
+  JOIN
+; lbl_true_br_91:
+  LDC  1
+  JOIN
+; lbl_false_br_92:
+  LD   0 0
+  LD   0 1
+  LDF  165     ; load fun @lbl_fruit?_29
+  AP   2
+  JOIN
+; lbl_false_br_90:
+  LD   0 0
+  LD   0 1
+  LDF  158     ; load fun @lbl_power-pill?_28
+  AP   2
+  SEL  461 463 ; branch to @lbl_true_br_91 otherwise @lbl_false_br_92
+  JOIN
+; lbl_true_br_93:
+  LDC  0
+  JOIN
+; lbl_false_br_94:
+  LDC  1
+  JOIN
