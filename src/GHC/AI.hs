@@ -5,6 +5,7 @@ import Prelude hiding (cycle,and)
 import GHC.AST
 import GHC.DSL
 import GHC.DSL.Interrupt
+import GHC.Pretty
 
 fickle :: GHCM ()
 fickle = do
@@ -36,8 +37,8 @@ flipper = do
     withGhostPosition idx $ \x _y -> do
       x `and` 1
       ifte (x =:= 1)
-        goUp
         goDown
+        goUp
   halt
 
 main :: IO ()
