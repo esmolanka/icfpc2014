@@ -185,6 +185,8 @@ compileExpr = para alg
       mapM_ fst args
       x -- x must add closure cell on the stack
       ap $ length args
+    alg (Debug (x, _)) =
+      x >> dbug
     alg (Reference name) = do
       var  <- isVar name
       func <- isFunc name
@@ -202,10 +204,10 @@ compileExpr = para alg
       ldc $ if b then 1 else 0
     alg form@(TailCall _ _)                = error $ show (fmap snd form) ++ " form not supported yet"
     alg form@(Constant (LiteralClosure _)) = error $ show (fmap snd form) ++ " form not supported yet"
-    alg form@(And _ _)                     = error $ show (fmap snd form) ++ " form not supported yet"
-    alg form@(Or _ _)                      = error $ show (fmap snd form) ++ " form not supported yet"
-    alg form@(Not _)                       = error $ show (fmap snd form) ++ " form not supported yet"
-    alg form@(Cond _)                      = error $ show (fmap snd form) ++ " form not supported yet"
+    alg form@(And _ _)                     = error $ show (fmap snd form) ++ " form must be desugared"
+    alg form@(Or _ _)                      = error $ show (fmap snd form) ++ " form must be desugared"
+    alg form@(Not _)                       = error $ show (fmap snd form) ++ " form must be desugared"
+    alg form@(Cond _)                      = error $ show (fmap snd form) ++ " form must be desugared"
     -- alg x = error $ show (fmap snd x) ++ " form not supported yet"
     -- alg (Cons x y)   = do
     --   tell []

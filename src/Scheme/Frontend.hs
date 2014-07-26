@@ -148,6 +148,10 @@ parseSexp input =
       case rest of
         [S.Atom x] -> MakeClosure $ mkSymbol x
         _ -> error $ "invalid make-closure form: " ++ show form
+    coalg form@(S.List (S.Atom "debug": rest)) =
+      case rest of
+        [x] -> Debug x
+        _ -> error $ "invalid debug form: " ++ show form
     coalg (S.List (func: rest)) =
       Call func rest
     coalg (S.List []) = error "empty list"

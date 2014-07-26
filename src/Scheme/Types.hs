@@ -45,6 +45,7 @@ data SexpF f = -- Define Symbol [Symbol] f
              | Begin [f]
              | MakeClosure Symbol -- symbol must be a function name
              | Call f [f]
+             | Debug f
              | TailCall Symbol [f] -- will be introduced by transformation
              | Reference Symbol
              -- | Quote f
