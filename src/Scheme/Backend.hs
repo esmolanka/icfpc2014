@@ -235,6 +235,7 @@ compileExpr = para alg
     alg form@(Or _ _)                      = error $ show (fmap snd form) ++ " form must be desugared"
     alg form@(Not _)                       = error $ show (fmap snd form) ++ " form must be desugared"
     alg form@(Cond _)                      = error $ show (fmap snd form) ++ " form must be desugared"
+    alg form@(LetStar _ _)                 = error $ show (fmap snd form) ++ " form must be desugared"
     -- alg x = error $ show (fmap snd x) ++ " form not supported yet"
     -- alg (Cons x y)   = do
     --   tell []

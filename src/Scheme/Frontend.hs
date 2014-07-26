@@ -69,8 +69,8 @@ parseSexp input =
     coalg :: S.Sexp -> SexpF S.Sexp
     coalg form@(S.List (S.Atom "lambda": rest)) =
       case rest of
-        [S.List args, body] -> Lambda (map atomToSymbol args)
-                                        body
+        S.List args: body -> Lambda (map atomToSymbol args)
+                                    body
         _ -> error $ "invalid lambda form: " ++ show form
     coalg form@(S.List (S.Atom "cons": rest)) =
       case rest of
@@ -113,6 +113,15 @@ parseSexp input =
         analyzeBinding :: S.Sexp -> (Symbol, S.Sexp)
         analyzeBinding (S.List [S.Atom x, y]) = (mkSymbol x, y)
         analyzeBinding b = error $ "invalid let binding: " ++ show b
+    coalg form@(S.List (S.Atom "let*": rest)) =
+      case rest of
+        S.List bindings: body ->
+          LetStar (map analyzeBinding bindings) body
+        _ -> error $ "invalid let* form: " ++ show form
+      where
+        analyzeBinding :: S.Sexp -> (Symbol, S.Sexp)
+        analyzeBinding (S.List [S.Atom x, y]) = (mkSymbol x, y)
+        analyzeBinding b = error $ "invalid let* binding: " ++ show b
     coalg form@(S.List (S.Atom "and": rest)) =
       case rest of
         [x, y] -> And x y
@@ -216,14 +225,26 @@ desugar prog =
           foldr (\(test, body) cont -> Fix $ If test (Fix $ Begin body) cont)
                 (Fix constNil)
                 cases
+        alg (LetStar bindings body) =
+          foldr (\binding rest -> Fix $ Let [binding] [rest]) (Fix $ Begin body) bindings
         alg form         = Fix form
 
 collectReferences :: Sexp -> Set Symbol
 collectReferences = cata alg
   where
     alg :: SexpF (Set Symbol) -> Set Symbol
-    alg (Reference name) = S.singleton name
-    alg e                = F.fold e
+    alg (Reference name)    = S.singleton name
+    alg (Lambda args body) =
+      F.fold body `S.difference` S.fromList args
+    alg (Let bindings body) =
+      F.fold body `S.difference` boundNames
+      where
+        boundNames = S.fromList $ map fst bindings
+    alg (LetStar bindings body) =
+      F.fold body `S.difference` boundNames
+      where
+        boundNames = S.fromList $ map fst bindings
+    alg e                   = F.fold e
 
 constNil :: SexpF a
 constNil = Constant $ LiteralInt 0

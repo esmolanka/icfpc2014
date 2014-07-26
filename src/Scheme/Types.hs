@@ -24,7 +24,7 @@ data Literal = LiteralInt Int
              deriving (Show, Eq, Ord)
 
 data SexpF f = -- Define Symbol [Symbol] f
-               Lambda [Symbol] f -- must be lifted
+               Lambda [Symbol] [f] -- must be lifted
              | Cons f f
              | Car f
              | Cdr f
