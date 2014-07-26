@@ -3,6 +3,7 @@
 (define (second xs) (car (cdr xs)))
 (define (third xs) (car (cdr (cdr xs))))
 (define (fourth xs) (car (cdr (cdr (cdr xs)))))
+(define (fifth xs) (car (cdr (cdr (cdr (cdr xs))))))
 
 ;; unsafe when index is out of bounds
 (define (nth i xs)
@@ -113,3 +114,82 @@
   (cons
    (length wmap)
    (length (car wmap))))
+
+;; The Lambda-Man status is a 5-tuple consisting of:
+;;   1. Lambda-Man's vitality;
+;;   2. Lambda-Man's current location, as an (x,y) pair;
+;;   3. Lambda-Man's current direction;
+;;   4. Lambda-Man's remaining number of lives;
+;;   5. Lambda-Man's current score.
+
+;; Lambda-Man's vitality is a number which is a countdown to the expiry of
+;; the active power pill, if any. It is 0 when no power pill is active.
+;;   * 0: standard mode;
+;;   * n > 0: power pill mode: the number of game ticks remaining while the
+;;            power pill will will be active
+
+(define (lm-vitality lm-status)
+  (first lm-status))
+
+(define (lm-location lm-status)
+  (second lm-status))
+
+(define (lm-direction lm-status)
+  (third lm-status))
+
+(define (lm-lives lm-status)
+  (fourth lm-status))
+
+(define (lm-score lm-status)
+  (fifth lm-status))
+
+;; The status of all the ghosts is a list with the status for each ghost.
+;; The list is in the order of the ghost number, so each ghost always appears
+;; in the same location in the list.
+
+;; The status for each ghost is a 3-tuple consisting of
+;;   1. the ghost's vitality
+;;   2. the ghost's current location, as an (x,y) pair
+;;   3. the ghost's current direction
+
+(define (gh-no n ghosts)
+  (nth n ghosts))
+
+(define (gh-vitality gh-status)
+  (first gh-status))
+
+(define (gh-location gh-status)
+  (second gh-status))
+
+(define (gh-direction gh-status)
+  (third gh-status))
+
+;; The Ghosts' vitality is an enumeration:
+;;   * 0: standard;
+;;   * 1: fright mode;
+;;   * 2: invisible.
+
+(define (gh-standard? gh-vit)
+  (== 0 gh-vit))
+
+(define (gh-frightened? gh-vit)
+  (== 1 gh-vit))
+
+(define (gh-invisible? gh-vit)
+  (== 2 gh-vit))
+
+
+;; The Ghosts' and Lambda-Man's direction is an enumeration:
+;;   * 0: up;
+;;   * 1: right;
+;;   * 2: down;
+;;   * 3: left.
+
+;; Define those as constants
+
+;; The status of the fruit is a number which is a countdown to the expiry of
+;; the current fruit, if any.
+;;   * 0: no fruit present;
+;;   * n > 0: fruit present: the number of game ticks remaining while the
+;;            fruit will will be present.
+
