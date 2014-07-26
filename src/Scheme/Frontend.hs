@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards     #-}
 
-module Scheme.Frontend (parseSexp, desugar) where
+module Scheme.Frontend (parseSexp, desugar, optimize) where
 
 import Data.ByteString.Lazy.Char8 (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BS
