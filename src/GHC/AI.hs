@@ -22,6 +22,24 @@ simple = do
               goUp
   halt
 
+-- hand == 1 - follow right hand
+-- hand == 0 - follow left  hand
+followHand :: Int -> GHCM ()
+followHand hand = do
+  withMyIndex $ \idx ->
+    withDirectionAndVitality idx $ \_vit dir -> do
+      if hand == 0
+      then
+        ifte (dir =:= 0)
+          (dir =: 3)
+          (dec dir)
+      else
+        ifte (dir =:= 3)
+          (dir =: 0)
+          (inc dir)
+      go dir
+  halt
+
 -- Always move in the direction of the lambda man (first one)
 -- Check X coordinate first if current direction is 0|1
 -- Otherwise checks Y coordinate first
@@ -90,7 +108,7 @@ flipper = do
   halt
 
 main :: IO ()
-main = putStrLn $ prettyProgram $ flatten $ runGHCM follower1
+main = putStrLn $ prettyProgram $ flatten $ runGHCM $ followHand 1
 
 test :: IO ()
-test = putStrLn $ pretty $ flatten $ runGHCM follower1
+test = putStrLn $ pretty $ flatten $ runGHCM $ followHand 1

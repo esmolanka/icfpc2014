@@ -40,8 +40,10 @@ mov dest src =
   cmd $ Mov dest src
 
 inc :: Var -> GHCM ()
-inc src =
-  cmd $ Inc src
+inc src = cmd $ Inc src
+
+dec :: Var -> GHCM ()
+dec src = cmd $ Dec src
 
 (=:) :: Var -> Var -> GHCM ()
 (=:) = mov
