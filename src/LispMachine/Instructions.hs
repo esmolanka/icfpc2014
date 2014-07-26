@@ -13,15 +13,16 @@ data AnnotatedAddr = AnnotatedAddr
 
 data Ref =
     At Addr
-  | Ref String
+  | Ref Label
     deriving (Show, Eq, Ord)
 
 data Statement = SetLabel Label
                | Instr (Instruction Ref)
+                 deriving (Show)
 
-newtype Program = Program [Statement]
+newtype Program = Program [Statement] deriving (Show)
 
-newtype FlatProgram = FlatProgram [Instruction AnnotatedAddr]
+newtype FlatProgram = FlatProgram [Instruction AnnotatedAddr] deriving (Show)
 
 data Instruction a =
     LDC Int             -- load constant, args: constant

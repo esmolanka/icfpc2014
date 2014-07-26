@@ -1,8 +1,9 @@
-
+{-# LANGUAGE BangPatterns #-}
 module LispMachine.Flatten where
 
 import qualified Data.Map as M
 import Data.Maybe
+import Data.List
 
 import LispMachine.Instructions
 
@@ -10,10 +11,10 @@ flatten :: Program -> FlatProgram
 flatten (Program lst) = FlatProgram $ mapMaybe deref lst
     where
       refs :: M.Map Ref Addr
-      refs = snd . foldr gather (0, M.empty) $ lst
+      refs = snd . foldl' gather (0, M.empty) $ lst
 
-      gather (SetLabel lbl) (offset, m) = (offset, M.insert (Ref lbl) (Addr offset) m)
-      gather (Instr _)  (offset, m) = (offset + 1, m)
+      gather (!offset, m) (SetLabel lbl) = (offset, M.insert (Ref lbl) (Addr offset) m)
+      gather (!offset, m) (Instr _)      = (offset + 1, m)
 
       deref (SetLabel _) = Nothing
       deref (Instr i) = Just (fmap lookupRef i)
