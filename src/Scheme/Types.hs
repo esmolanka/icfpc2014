@@ -34,6 +34,7 @@ data SexpF f = -- Define Symbol [Symbol] f
              | Div f f
              | Assign Symbol f
              | Let [(Symbol, f)] [f] -- parallel let
+             | LetStar [(Symbol, f)] [f] -- sequential let
              | And f f
              | Or f f
              | Not f
@@ -56,9 +57,11 @@ data SexpF f = -- Define Symbol [Symbol] f
 type Sexp = Fix SexpF
 
 data DefinitionF f = Define
-                   { defName ::  Symbol
-                   , defArgs :: [Symbol]
-                   , defBody :: [f]
+                   { defName       ::  Symbol
+                   , defArgs       :: [Symbol]
+                   , defBody       :: [f]
+                   , defInlinable  :: Bool -- whether this form is inlinable
+                   , defIsConstant :: Bool -- whether is was defined as a constant
                    }
                    deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
 

@@ -6,7 +6,10 @@ module Scheme.Frontend (parseSexp, desugar) where
 import Data.ByteString.Lazy.Char8 (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BS
 import Data.Char
+import qualified Data.Foldable as F
 import Data.List
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy as T
 
@@ -40,15 +43,24 @@ parseSexp input =
     defCoalg :: S.Sexp -> DefinitionF S.Sexp
     defCoalg form@(S.List (S.Atom "define": rest)) =
       case rest of
-        -- constant
-        S.Atom name: body         -> Define (mkSymbol name)
+        -- constant, but looks like
+        S.Atom name: body
+          | inlinableName name -> Define (mkSymbol name)
                                             []
                                             body
+                                            True
+                                            True
+          | otherwise -> error "non-inlinable toplevel constants are not supported"
         -- function
-        S.List (name: args): body -> Define (atomToSymbol name)
-                                            (map atomToSymbol args)
-                                            body
+        S.List (S.Atom name: args): body -> Define (mkSymbol name)
+                                                   (map atomToSymbol args)
+                                                   body
+                                                   (inlinableName name)
+                                                   False
         _ -> error $ "invalid define form: " ++ show form
+      where
+        inlinableName :: ByteString -> Bool
+        inlinableName x = BS.length x > 1 && BS.head x == '+' && BS.last x == '+'
     defCoalg form = error $ "expected define form instead of: " ++ show form
 
     mkExpr :: S.Sexp -> Sexp
@@ -172,8 +184,10 @@ validateSchemeProg prog
   | any ((> 1) . length) groupedNames = Left $ "functions " ++ intercalate ", " redefinedNames ++
                                         " are defined more than once"
   | not $ elem (Symbol "main") names  = Left "progam does not define main function"
-  | Just (Define _ args _) <- mainFunc,
+  | Just (Define _ args _ _ _) <- mainFunc,
     length args /= 2 = Left "main function should take 2 arguments: the initial state of the world and a dummy one."
+  | Just (Define _ _ _ _ isConstant) <- mainFunc,
+    isConstant = Left "main function should not be defined as constant"
   | otherwise                         = Right prog
   where
     names        = map defName prog
@@ -187,7 +201,8 @@ desugar prog =
   map desugarDefine prog
   where
     desugarDefine :: Definition -> Definition
-    desugarDefine (Define name args body) = Define name args $ map desugarSexp body
+    desugarDefine (Define name args body isInlinable isConstant) =
+      Define name args (map desugarSexp body) isInlinable isConstant
 
     desugarSexp :: Sexp -> Sexp
     desugarSexp = cata alg
@@ -203,6 +218,12 @@ desugar prog =
                 cases
         alg form         = Fix form
 
+collectReferences :: Sexp -> Set Symbol
+collectReferences = cata alg
+  where
+    alg :: SexpF (Set Symbol) -> Set Symbol
+    alg (Reference name) = S.singleton name
+    alg e                = F.fold e
 
 constNil :: SexpF a
 constNil = Constant $ LiteralInt 0

@@ -6,6 +6,7 @@
 module Scheme.Backend where
 
 import Control.Applicative
+import Control.Arrow
 import Control.Monad.Reader hiding (ap, join)
 -- import Control.Monad.Error
 -- import Control.Monad.State
@@ -33,6 +34,7 @@ newtype Env = Env { getEnv :: [Frame] }
 data CompileEnv = CompileEnv
                 { variableEnv :: Env
                 , functionEnv :: Map Symbol RRef
+                , constantEnv :: Map Symbol Sexp
                 }
                 deriving (Show, Eq, Ord)
 
@@ -53,7 +55,7 @@ mkFrame args = Frame $ M.fromList $ zip args [0..]
 withFrameForArgs :: [Symbol] -> CompileM a -> CompileM a
 withFrameForArgs args action = local (addFrame (mkFrame args)) action
   where
-    addFrame frame compileEnv@(CompileEnv (Env frames) _) =
+    addFrame frame compileEnv@(CompileEnv (Env frames) _ _) =
       compileEnv { variableEnv = (Env $ frame: frames) }
 
 functionLabel :: Symbol -> CompileM RRef
@@ -61,6 +63,12 @@ functionLabel name = do
   funcEnv <- asks functionEnv
   maybe (error $ "unresolved function name: " ++ show (getSymbol name)) return $
     M.lookup name funcEnv
+
+resolveConstant :: Symbol -> CompileM Sexp
+resolveConstant name = do
+  constEnv <- asks constantEnv
+  maybe (error $ "unresolved constant: " ++ show name) return $
+    M.lookup name constEnv
 
 -- Returns Nth frame in environment chain where ref is bound and location
 -- inside that frame.
@@ -84,16 +92,30 @@ isVar name = do
 isFunc :: Symbol -> CompileM Bool
 isFunc name = M.member name <$> asks functionEnv
 
+isConstant :: Symbol -> CompileM Bool
+isConstant name = M.member name <$> asks constantEnv
+
 compileProg :: SchemeProg -> Either String Program
 compileProg prog =
-  genProgram (CompileEnv (Env []) (error "funcEnv not initialized")) $ do
-    labels <- mapM (\name -> (name, ) <$> mkNamedLabel (getSymbol name)) otherNames
-    local (\compEnv -> compEnv { functionEnv = M.fromList labels }) $ do
+  genProgram initialEnv $ do
+    labels <- mapM (\name -> (name, ) <$> mkNamedLabel (getSymbol name)) funcNames
+    let funcEnv = M.fromList labels
+    local (\compEnv -> compEnv { functionEnv = funcEnv, constantEnv = constEnv }) $ do
       compileFunc mainFunc
-      mapM_ compileFunc otherFuncs
+      mapM_ compileFunc funcs
   where
-    ([mainFunc], otherFuncs) = partition ((== Symbol "main") . defName) prog
-    otherNames = map defName otherFuncs
+    initialEnv = CompileEnv (Env [])
+                            (error "funcEnv not initialized")
+                            (error "constantEnv not initialized")
+    ([mainFunc], otherNames) = partition ((== Symbol "main") . defName) prog
+    (constants, funcs)       = partition defIsConstant otherNames
+    funcNames                = map defName funcs
+    constEnv                 = M.fromList $ map (defName &&& getBody) constants
+      where
+        getBody :: Definition -> Sexp
+        getBody def = case defBody def of
+                        [x] -> x
+                        xs  -> Fix $ Begin xs
 
 -- (define (main world undocumented)
 --   (cons initial-state (make-closure step)))
@@ -103,11 +125,12 @@ compileProg prog =
 --   (cons (cons 0 world) (make-closure step)))
 
 compileFunc :: Definition -> CompileM ()
-compileFunc (Define (Symbol "main") args body) = do
+compileFunc (Define (Symbol "main") args body _ _) = do
   withFrameForArgs args $ do
     mapM_ compileExpr body
     rtn
-compileFunc (Define name args body) = do
+compileFunc (Define name args body _isInlinable isConst) = do
+  when isConst $ error $ "cannot compile constant as a function: " ++ show (getSymbol name)
   -- label <- mkNamedLabel $ getSymbol name
   label <- functionLabel name
   block label $
@@ -119,7 +142,7 @@ compileExpr :: Sexp -> CompileM ()
 compileExpr = para alg
   where
     alg :: SexpF (CompileM (), Fix SexpF) -> CompileM ()
-    alg (Lambda _ _)        = error "lambda not supported yet"
+    alg (Lambda _ _) = error "lambda not supported yet"
     alg (Cons (x, _) (y, _)) =
       x >> y >> cons
     alg (Car (x, _)) =
@@ -189,8 +212,9 @@ compileExpr = para alg
       x >> dbug
     alg (Break) = brk
     alg (Reference name) = do
-      var  <- isVar name
-      func <- isFunc name
+      var      <- isVar name
+      func     <- isFunc name
+      constant <- isConstant name
       -- structured-haskell-mode cannot handle multiway ifs, inconvenient
       case () of
         _ | var -> do
@@ -198,6 +222,8 @@ compileExpr = para alg
               ld n k
           | func -> do
             functionLabel name >>= ldf
+          | constant ->
+            resolveConstant name >>= compileExpr
           | otherwise -> error $ "unresolved reference: " ++ show (getSymbol name)
     alg (Constant (LiteralInt n)) = do
       ldc n
