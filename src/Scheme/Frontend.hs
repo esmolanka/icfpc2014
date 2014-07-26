@@ -130,6 +130,10 @@ parseSexp input =
       case rest of
         [x, y] -> Or x y
         _ -> error $ "invalid or form: " ++ show form
+    coalg form@(S.List (S.Atom "not": rest)) =
+      case rest of
+        [x] -> Not x
+        _ -> error $ "invalid not form: " ++ show form
     coalg form@(S.List (S.Atom "cond": rest)) =
       Cond $ map extractCondCase rest
       where
@@ -228,6 +232,19 @@ desugar prog =
         alg (LetStar bindings body) =
           foldr (\binding rest -> Fix $ Let [binding] [rest]) (Fix $ Begin body) bindings
         alg form         = Fix form
+
+optimize :: SchemeProg -> SchemeProg
+optimize = map (fmap optimizeExpr)
+  where
+    optimizeExpr :: Sexp -> Sexp
+    optimizeExpr = cata alg
+
+    alg :: SexpF Sexp -> Sexp
+    alg (If (Fix (Not z)) x y) = Fix $ If z y x
+    alg (Begin [x])            = x
+    alg (Let [] xs)            = optimizeExpr $ Fix $ Begin xs
+    alg (Not (Fix (Not x)))    = x
+    alg e                      = Fix e
 
 collectReferences :: Sexp -> Set Symbol
 collectReferences = cata alg
