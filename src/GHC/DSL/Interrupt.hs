@@ -34,6 +34,9 @@ withRegister (R r) vars f = do
     modVarSet (Set.insert regVar) $
       f regVar vars
 
+debug :: GHCM ()
+debug = int 8
+
 withMyIndex :: (Var -> GHCM ()) -> GHCM ()
 withMyIndex f =
   withVar 0 $ \idx -> do
@@ -42,23 +45,47 @@ withMyIndex f =
       idx =: a
     f idx
 
+withMapContent :: Var -> Var -> (Var -> GHCM ()) -> GHCM ()
+withMapContent x y f = do
+  withVar 0 $ \cont -> do
+    withRegisters [R 'A', R 'B'] [x,y,cont] $ \[a,b] [x,y,cont] -> do
+      a =: x
+      b =: y
+      int 7
+      cont =: a
+    f cont
+
 withDirectionAndVitality :: Var -> (Var -> Var -> GHCM ()) -> GHCM ()
 withDirectionAndVitality idx f =
   withVar2 0 0 $ \vit dir -> do
-    withRegisters [R 'A', R 'B'] [idx] $ \[a,b] [idx] -> do
+    withRegisters [R 'A', R 'B'] [idx,vit,dir] $ \[a,b] [idx,vit,dir] -> do
       a =: idx
       int 6
       vit =: a
       dir =: b
     f vit dir
 
--- Current!
-withGhostPosition :: Var -> (Var -> Var -> GHCM ()) -> GHCM ()
-withGhostPosition idx f =
+data GPos = Current | Starting
+
+withGhostPosition :: GPos -> Var -> (Var -> Var -> GHCM ()) -> GHCM ()
+withGhostPosition gpos idx f =
   withVar2 0 0 $ \x y -> do
-    withRegisters [R 'A', R 'B'] [idx] $ \[a,b] [idx] -> do
+    withRegisters [R 'A', R 'B'] [idx,x,y] $ \[a,b] [idx,x,y] -> do
       a =: idx
-      int 5
+      let intCode = case gpos of
+            Starting -> 4
+            Current -> 5
+      int intCode
+      x =: a
+      y =: b
+    f x y
+
+-- player = 1 | 2
+withLambdaManPosition :: Int -> (Var -> Var -> GHCM ()) -> GHCM ()
+withLambdaManPosition player f =
+  withVar2 0 0 $ \x y -> do
+    withRegisters [R 'A', R 'B'] [x,y] $ \[a,b] [x,y] -> do
+      int player
       x =: a
       y =: b
     f x y

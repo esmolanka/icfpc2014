@@ -7,6 +7,9 @@ import GHC.DSL
 import GHC.DSL.Interrupt
 import GHC.Pretty
 
+smart :: GHCM ()
+smart = undefined
+
 fickle :: GHCM ()
 fickle = do
    withVar3 inifinity 0 (-1) $ \a b c -> do
@@ -34,7 +37,7 @@ miner = do
 flipper :: GHCM ()
 flipper = do
   withMyIndex $ \idx ->
-    withGhostPosition idx $ \x _y -> do
+    withGhostPosition Current idx $ \x _y -> do
       x `and` 1
       ifte (x =:= 1)
         goDown
