@@ -1,0 +1,161 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PatternGuards     #-}
+
+module Scheme.Parse (parseSexp) where
+
+import Data.ByteString.Lazy.Char8 (ByteString)
+import qualified Data.ByteString.Lazy.Char8 as BS
+import Data.Char
+import Data.List
+import Data.Set (Set)
+import qualified Data.Set as Set
+import Data.Text.Lazy (Text)
+import qualified Data.Text.Lazy as T
+
+-- import Data.Sexp (List, Atom)
+import qualified Data.Sexp as S
+import Language.Sexp.Parser (parse)
+
+import Scheme.Types
+import Utils.RecursionSchemes
+
+bsToText :: ByteString -> Text
+bsToText = T.pack . BS.unpack
+
+mkSymbol :: ByteString -> Symbol
+mkSymbol = Symbol . bsToText
+
+parseSexp :: Text -> Either String SchemeProg
+parseSexp input =
+  either Left validateSchemeProg $
+  either (\(msg, rest) -> Left $ msg ++ BS.unpack rest) (Right . map mkDef) $
+  parse (BS.pack $ T.unpack input)
+  where
+    atomToSymbol :: S.Sexp -> Symbol
+    atomToSymbol (S.Atom x) = mkSymbol x
+    atomToSymbol list         =
+      error $ "atomToSymbol: expected symbol but got list: " ++ show list
+
+    mkDef :: S.Sexp -> Definition
+    mkDef = fmap mkExpr . defCoalg
+
+    defCoalg :: S.Sexp -> DefinitionF S.Sexp
+    defCoalg form@(S.List (S.Atom "define": rest)) =
+      case rest of
+        -- constant
+        [S.Atom name, body]         -> Define (mkSymbol name)
+                                              []
+                                              body
+        -- function
+        [S.List (name: args), body] -> Define (atomToSymbol name)
+                                                (map atomToSymbol args)
+                                                body
+        _ -> error $ "invalid define form: " ++ show form
+    defCoalg form = error $ "expected define form instead of: " ++ show form
+
+    mkExpr :: S.Sexp -> Sexp
+    mkExpr = ana coalg
+
+    coalg :: S.Sexp -> SexpF S.Sexp
+    coalg form@(S.List (S.Atom "lambda": rest)) =
+      case rest of
+        [S.List args, body] -> Lambda (map atomToSymbol args)
+                                        body
+        _ -> error $ "invalid lambda form: " ++ show form
+    coalg form@(S.List (S.Atom "cons": rest)) =
+      case rest of
+        [x, y] -> Cons x y
+        _ -> error $ "invalid cons form: " ++ show form
+    coalg form@(S.List (S.Atom "car": rest)) =
+      case rest of
+        [x] -> Car x
+        _ -> error $ "invalid car form: " ++ show form
+    coalg form@(S.List (S.Atom "cdr": rest)) =
+      case rest of
+        [x] -> Cdr x
+        _ -> error $ "invalid cdr form: " ++ show form
+    coalg form@(S.List (S.Atom "+": rest)) =
+      case rest of
+        [x, y] -> Add x y
+        _ -> error $ "invalid + form: " ++ show form
+    coalg form@(S.List (S.Atom "*": rest)) =
+      case rest of
+        [x, y] -> Mul x y
+        _ -> error $ "invalid * form: " ++ show form
+    coalg form@(S.List (S.Atom "-": rest)) =
+      case rest of
+        [x, y] -> Sub x y
+        _ -> error $ "invalid - form: " ++ show form
+    coalg form@(S.List (S.Atom "/": rest)) =
+      case rest of
+        [x, y] -> Div x y
+        _ -> error $ "invalid / form: " ++ show form
+    coalg form@(S.List (S.Atom "set!": rest)) =
+      case rest of
+        [S.Atom x, y] -> Assign (mkSymbol x) y
+        _ -> error $ "invalid / form: " ++ show form
+    coalg form@(S.List (S.Atom "let": rest)) =
+      case rest of
+        [S.List bindings, body] ->
+          Let (map analyzeBinding bindings) body
+        _ -> error $ "invalid let form: " ++ show form
+      where
+        analyzeBinding :: S.Sexp -> (Symbol, S.Sexp)
+        analyzeBinding (S.List [S.Atom x, y]) = (mkSymbol x, y)
+        analyzeBinding b = error $ "invalid let binding: " ++ show b
+    coalg form@(S.List (S.Atom "if": rest)) =
+      case rest of
+        [x, y, z] -> If x y z
+        _ -> error $ "invalid if form: " ++ show form
+    coalg form@(S.List (S.Atom "==": rest)) =
+      case rest of
+        [x, y] -> Cmp CmpEq x y
+        _ -> error $ "invalid == form: " ++ show form
+    coalg form@(S.List (S.Atom ">": rest)) =
+      case rest of
+        [x, y] -> Cmp CmpGt x y
+        _ -> error $ "invalid > form: " ++ show form
+    coalg form@(S.List (S.Atom ">=": rest)) =
+      case rest of
+        [x, y] -> Cmp CmpGe x y
+        _ -> error $ "invalid == form: " ++ show form
+    coalg form@(S.List (S.Atom "atom?": rest)) =
+      case rest of
+        [x] -> IsAtom x
+        _ -> error $ "invalid atom? form: " ++ show form
+    coalg (S.List (S.Atom "list": rest)) =
+      List rest
+    coalg (S.List (S.Atom "begin": rest)) =
+      Begin rest
+    coalg form@(S.List (S.Atom "make-closure": rest)) =
+      case rest of
+        [S.Atom x] -> MakeClosure $ mkSymbol x
+        _ -> error $ "invalid make-closure form: " ++ show form
+    coalg (S.List (func: rest)) =
+      Call func rest
+    coalg (S.List []) = error "empty list"
+
+    coalg (S.Atom "#t") = Constant $ Fix $ LiteralBool True
+    coalg (S.Atom "#f") = Constant $ Fix $ LiteralBool False
+    coalg (S.Atom name)
+      | BS.all isDigit name = Constant $ Fix $ LiteralInt $ read $ BS.unpack name
+      | otherwise = Reference $ mkSymbol name
+
+validateSchemeProg :: SchemeProg -> Either String SchemeProg
+validateSchemeProg []   = Left "no functions defined in program"
+validateSchemeProg prog
+  | any ((> 1) . length) groupedNames = Left $ "functions " ++ intercalate ", " redefinedNames ++
+                                        " are defined more than once"
+  | not $ elem (Symbol "main") names  = Left "progam does not define main function"
+  | Just (Define _ args _) <- mainFunc,
+    length args /= 2 = Left "main function should take 2 arguments: the initial state of the world and a dummy one."
+  | otherwise                         = Right prog
+  where
+    names        = map defName prog
+    groupedNames :: [[Symbol]]
+    groupedNames = group names
+    redefinedNames = map (T.unpack . getSymbol . head) $ filter ((> 1) . length) groupedNames
+    mainFunc = find ((== (Symbol "main")) . defName) prog
+
+
+

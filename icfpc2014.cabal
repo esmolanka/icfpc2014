@@ -16,12 +16,13 @@ extra-source-files:  README.md
 cabal-version:       >=1.16
 
 library
-  build-depends:       base >= 4.6, text, mtl, transformers, sexp, attoparsec, containers, ansi-wl-pprint, bytestring, parsec
+  build-depends:       base >= 4.6, text, mtl, transformers, sexp, attoparsec, containers, ansi-wl-pprint, bytestring, parsec, dlist
   exposed-modules:     LispMachine.Instructions
                        LispMachine.Parse
                        LispMachine.Print
                        LispMachine.Flatten
-                       Scheme.Lisp
+                       Scheme.Types
+                       Scheme.Parse
                        Utils.RecursionSchemes
   hs-source-dirs:      src
   default-language:    Haskell2010
