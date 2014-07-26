@@ -22,7 +22,7 @@ lispAsmDef = emptyDef
    , P.identLetter = alphaNum <|> oneOf "-_<>%$&*@!#"
    , P.opStart     = oneOf ":"
    , P.opLetter    = alphaNum <|> oneOf "-_<>%$&*@!#:"
-   , P.reservedNames = ["LDC","LD","ADD","SUB","MUL","DIV","CEQ","CGT","CGTE","ATOM"
+   , P.reservedNames = ["LDC","LD","ST","ADD","SUB","MUL","DIV","CEQ","CGT","CGTE","ATOM"
                      ,"CONS","CAR","CDR","SEL","JOIN","LDF","AP","RTN","DUM","RAP"
                      ,"STOP","TSEL","TAP","TRAP","DBUG","BRK"]
    , P.reservedOpNames = [":"]
@@ -62,6 +62,7 @@ instruction :: Parsec String u (Instruction Ref)
 instruction = choice
   [ LDC <$ reserved "LDC" <*> int
   , LD <$ reserved "LD" <*> int <*> int
+  , ST <$ reserved "ST" <*> int <*> int
   , ADD <$ reserved "ADD"
   , SUB <$ reserved "SUB"
   , MUL <$ reserved "MUL"

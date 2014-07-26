@@ -35,6 +35,9 @@ ldc x = putI $ LDC x
 ld :: Int -> Int -> GenM ()
 ld n i = putI $ LD n i
 
+st :: Int -> Int -> GenM ()
+st n i = putI $ ST n i
+
 add :: GenM ()
 add = putI ADD
 

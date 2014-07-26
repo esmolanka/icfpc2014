@@ -27,6 +27,7 @@ newtype FlatProgram = FlatProgram [Instruction AnnotatedAddr] deriving (Show)
 data Instruction a =
     LDC Int             -- load constant, args: constant
   | LD Int Int          -- load from environment, frame and i'th element of frame, ARGS: frame index, element index
+  | ST Int Int          -- update environment, work like LD
   | ADD                 -- integer addition
   | SUB                 -- integer subtraction
   | MUL                 -- integer multiplication

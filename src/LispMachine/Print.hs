@@ -32,6 +32,7 @@ toCol n t = column (\c -> if c < n then text (replicate (n-c) ' ') <> t else t)
 ppInstr :: Instruction AnnotatedAddr -> Doc
 ppInstr (LDC c)   = instr "LDC"  <+> int c
 ppInstr (LD n i)  = instr "LD"   <+> int n <+> int i
+ppInstr (ST n i)  = instr "ST"   <+> int n <+> int i
 ppInstr ADD       = instr "ADD"
 ppInstr SUB       = instr "SUB"
 ppInstr MUL       = instr "MUL"
