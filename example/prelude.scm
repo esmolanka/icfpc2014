@@ -185,7 +185,10 @@
 ;;   * 2: down;
 ;;   * 3: left.
 
-;; Define those as constants
+(define +up+ 0)
+(define +right+ 1)
+(define +down+ 2)
+(define +left+ 3)
 
 ;; The status of the fruit is a number which is a countdown to the expiry of
 ;; the current fruit, if any.
