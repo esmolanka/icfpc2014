@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
-module Scheme.Compiler where
+module Scheme.Backend where
 
 import Control.Applicative
 import Control.Monad.Reader hiding (ap, join)
@@ -155,23 +155,17 @@ compileExpr = para alg
       -- make closure and call it
       ldf label
       ap (length bindings)
-      withFrameForArgs (map fst bindings) $ do
-        block label $
-          mapM_ fst body
-      -- label <- mkNamedLabel $ getSymbol "let_body"
-      -- withFrameForArgs (map fst bindings) $ do
-      --   dum $ length bindings
-      --   mapM_ (\(var, (initExpr, _)) -> initExpr >> resolveVar var >>= uncurry st)
-      --         bindings
-      --   block label
-      --         body
+      withFrameForArgs (map fst bindings) $
+        standaloneBlock label $ do
+         mapM_ fst body
+         rtn
     alg (If (c, _) (t, _) (f, _)) = do
       trueLabel <- mkNamedLabel "true_br"
       falseLabel <- mkNamedLabel "false_br"
       c
       sel trueLabel falseLabel
-      condBlock trueLabel (t >> join)
-      condBlock falseLabel (f >> join)
+      standaloneBlock trueLabel (t >> join)
+      standaloneBlock falseLabel (f >> join)
     alg (Cmp op (x, _) (y, _)) = do
       x
       y
@@ -182,7 +176,7 @@ compileExpr = para alg
     alg (IsAtom (x, _)) =
       x >> atom
     alg (List xs) =
-      foldr (\head tail -> head >> tail >> cons) (ldc 0) $ map fst xs
+      foldr (\h t -> h >> t >> cons) (ldc 0) $ map fst xs
     alg (Begin xs) =
       sequence_ $ map fst xs
     alg (MakeClosure name) =
@@ -211,7 +205,10 @@ compileExpr = para alg
       ldc n
     alg (Constant (LiteralBool b)) = do
       ldc $ if b then 1 else 0
-    alg x = error $ show (fmap snd x) ++ " form not supported yet"
+    alg form@(And _ _) = error $ show (fmap snd form) ++ " form not supported yet"
+    alg form@(Or _ _) = error $ show (fmap snd form) ++ " form not supported yet"
+    alg form@(Cond _) = error $ show (fmap snd form) ++ " form not supported yet"
+    -- alg x = error $ show (fmap snd x) ++ " form not supported yet"
     -- alg (Cons x y)   = do
     --   tell []
 

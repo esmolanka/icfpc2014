@@ -23,10 +23,10 @@ toLabel (RRef name i) = "lbl_" ++ T.unpack name ++ "_" ++ show i
 toRefLabel :: RRef -> Ref
 toRefLabel = Ref . toLabel
 
-newtype CondBlock = CondBlock { getCondBlock :: [Statement] }
-                  deriving (Show, Eq, Ord, Monoid)
+newtype StandaloneBlock = StandaloneBlock { getCondBlock :: [Statement] }
+                        deriving (Show, Eq, Ord, Monoid)
 
-type GenM env = RWST env ([Statement], [CondBlock]) GenState (Either String)
+type GenM env = RWST env ([Statement], [StandaloneBlock]) GenState (Either String)
 
 putI :: Instruction Ref -> GenM e ()
 putI = tell . (, mempty) . (:[]) . Instr
@@ -129,19 +129,21 @@ block ref gen = do
   putLabel ref
   gen
 
-condBlock :: RRef -> GenM e a -> GenM e a
-condBlock ref gen =
+standaloneBlock :: RRef -> GenM e a -> GenM e a
+standaloneBlock ref gen =
   censor toCondBlock $ do
     putLabel ref
     gen
   where
-    toCondBlock :: ([Statement], [CondBlock]) -> ([Statement], [CondBlock])
+    toCondBlock :: ([Statement], [StandaloneBlock]) -> ([Statement], [StandaloneBlock])
     toCondBlock res@([], _) = res
     toCondBlock (xs, ys)
-      | last xs /= Instr JOIN =
+      | end /= Instr JOIN && end /= Instr RTN =
         error $ "conditional block does not end in JOIN:\n" ++ show xs
       | otherwise             =
-        (mempty, ys ++ [CondBlock xs])
+        (mempty, ys ++ [StandaloneBlock xs])
+      where
+        end = last xs
 
 initEnv :: ()
 initEnv = ()
