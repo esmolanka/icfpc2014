@@ -1,6 +1,6 @@
 module GHC.AI where
 
-import Prelude hiding (cycle,and)
+import Prelude hiding (cycle,and,mod)
 
 import GHC.AST
 import GHC.DSL
@@ -20,7 +20,32 @@ simple = do
            ifte (py <: ly)
               goDown
               goUp
-  halt
+
+-- Switches from left to rigth hand strategy
+-- every `period` moves
+ambidexter :: Int -> GHCM ()
+ambidexter period = do
+  switchHand
+  updateTimeVar
+  makeMove
+  where
+    timeVar = mem 0
+    handVar = mem 1
+
+    makeMove =
+      ifte (handVar =:= 0)
+        (followHand 0)
+        (followHand 1)
+
+    updateTimeVar = do
+      inc timeVar
+      if' (timeVar =:= litVar period) $
+        timeVar =: 0
+
+    switchHand = do
+      if' (timeVar =:= 0) $ do
+        inc handVar
+        handVar `and` 1
 
 -- hand == 1 - follow right hand
 -- hand == 0 - follow left  hand
@@ -38,7 +63,6 @@ followHand hand = do
           (dir =: 0)
           (inc dir)
       go dir
-  halt
 
 -- Always move in the direction of the lambda man (first one)
 -- Check X coordinate first if current direction is 0|1
@@ -52,7 +76,6 @@ follower1 = do
           ifte (dir <: 2)
             (checkYFirst (px,py) (lx,ly))
             (checkXFirst (px,py) (lx,ly))
-  halt
   where
     checkXFirst (px,py) (lx,ly) = do
       ifte (px <: lx)
@@ -90,12 +113,9 @@ fickle = do
      withDirectionAndVitality idx $ \_vit dir -> do
        inc (mem dir)
 
-   halt
-
 miner :: GHCM ()
 miner = do
   goDown
-  halt
 
 flipper :: GHCM ()
 flipper = do
@@ -105,10 +125,9 @@ flipper = do
       ifte (x =:= 1)
         goDown
         goUp
-  halt
 
 main :: IO ()
-main = putStrLn $ prettyProgram $ flatten $ runGHCM $ followHand 1
+main = putStrLn $ prettyProgram $ flatten $ runGHCM $ ambidexter 25
 
 test :: IO ()
-test = putStrLn $ pretty $ flatten $ runGHCM $ followHand 1
+test = putStrLn $ pretty $ flatten $ runGHCM $ ambidexter 25

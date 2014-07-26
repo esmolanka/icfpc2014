@@ -4,6 +4,7 @@
 
 module GHC.DSL where
 
+import Prelude hiding (div)
 import GHC.AST
 
 litVar :: Int -> Var
@@ -36,8 +37,10 @@ withVar3 v1 v2 v3 func = do
         func r1 r2 r3
 
 mov :: Var -> Var -> GHCM ()
-mov dest src =
-  cmd $ Mov dest src
+mov dest src = cmd $ Mov dest src
+
+(=:) :: Var -> Var -> GHCM ()
+(=:) = mov
 
 inc :: Var -> GHCM ()
 inc src = cmd $ Inc src
@@ -45,16 +48,28 @@ inc src = cmd $ Inc src
 dec :: Var -> GHCM ()
 dec src = cmd $ Dec src
 
-(=:) :: Var -> Var -> GHCM ()
-(=:) = mov
-
 add :: Var -> Var -> GHCM ()
-add dest src =
-  cmd $ Add dest src
+add dest src = cmd $ Add dest src
+
+sub :: Var -> Var -> GHCM ()
+sub dest src = cmd $ Sub dest src
 
 and :: Var -> Var -> GHCM ()
-and dest src =
-  cmd $ And dest src
+and dest src = cmd $ And dest src
+
+div :: Var -> Var -> GHCM ()
+div dest src = cmd $ Div dest src
+
+mul :: Var -> Var -> GHCM ()
+mul dest src = cmd $ Mul dest src
+
+mod :: Var -> Var -> GHCM ()
+mod dest src = do
+  withVar 0 $ \q -> do
+    q =: dest
+    q `div` src
+    q `mul` src
+    dest `sub` q
 
 true :: Cmp
 true = Lit 0 =:= Lit 0
@@ -83,6 +98,9 @@ ifte cmp t f = do
       f
       gotoAfter label
     t
+
+if' :: Cmp -> GHCM () -> GHCM ()
+if' cmp t = ifte cmp t $ return ()
 
 breakIf :: Cmp -> GHCM ()
 breakIf cmp = do

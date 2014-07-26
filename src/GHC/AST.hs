@@ -165,7 +165,7 @@ runGHCM act =
   flip evalState 0 $
   runWriterT $
   flip runReaderT mempty $
-  act
+  (act >> cmd Hlt)
 
 withLabel :: (Label -> GHCM ()) -> GHCM ()
 withLabel f = do
