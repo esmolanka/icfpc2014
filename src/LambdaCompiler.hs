@@ -2,10 +2,13 @@
 import Control.Monad
 
 import System.Environment
+import System.Directory
+import System.FilePath
+
+import Control.Applicative
 
 import qualified Data.Text.Lazy as T
 import qualified Data.Text.Lazy.IO as T
-import System.Directory
 
 import LispMachine.Flatten
 import LispMachine.Print
@@ -45,15 +48,32 @@ prelude = "prelude.scm"
 main :: IO ()
 main = do
   args <- getArgs
-  let printDebugMode = "-d" `elem` args
 
-  src <- T.getContents
-  havePrelude <- doesFileExist prelude
-  src' <- if havePrelude
-          then T.readFile prelude >>= return . T.append src
-          else return src
+  let printDebugMode = "-d" `elem` args
+  let printHelpMode = "-h" `elem` args
+
+  when (printHelpMode) $ do
+         error "LambdaCompiler [-h|-d] [filename.scm]\n\
+               \If filename is omitted, stdin is used."
+
+  let filenames = filter ((/= '-') . head) args
+
+  (preludeFns, src') <-
+      case filenames of
+        (fn:_) -> do
+          src <- T.readFile fn
+          let preludeFns = [ replaceBaseName fn "prelude", prelude ]
+          return (preludeFns, src)
+        [] -> do
+          src <- T.getContents
+          return ([prelude], src)
+
+  havePrelude <- filter (snd) <$> mapM (\fn -> (,) <$> pure fn <*> doesFileExist fn) preludeFns
+  src <- case map fst havePrelude of
+           (fn:_) -> T.readFile fn >>= return . T.append src'
+           []     -> return src'
 
   if printDebugMode
-     then debugScheme src'
-     else compileScheme src'
+     then debugScheme src
+     else compileScheme src
 
