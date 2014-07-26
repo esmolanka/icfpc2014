@@ -55,6 +55,11 @@ withMapContent x y f = do
       cont =: a
     f cont
 
+withMyPosition :: (Var -> Var -> GHCM ()) -> GHCM ()
+withMyPosition f =
+  withMyIndex $ \idx ->
+    withGhostPosition Current idx f
+
 withDirectionAndVitality :: Var -> (Var -> Var -> GHCM ()) -> GHCM ()
 withDirectionAndVitality idx f =
   withVar2 0 0 $ \vit dir -> do
