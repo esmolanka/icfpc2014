@@ -11,7 +11,6 @@ data AnnotatedAddr = AnnotatedAddr
     , aLabel :: Maybe Label
     } deriving (Show, Eq, Ord)
 
--- | Reference ID
 data Ref =
     At Addr
   | Ref String
@@ -20,11 +19,8 @@ data Ref =
 data Statement = SetLabel Label
                | Instr (Instruction Ref)
 
--- | List of instructions (Right) + label definitions (Left), can be
--- refactored to richer ADT
 newtype Program = Program [Statement]
 
--- | List of instructions.
 newtype FlatProgram = FlatProgram [Instruction AnnotatedAddr]
 
 data Instruction a =

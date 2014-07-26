@@ -16,7 +16,7 @@ extra-source-files:  README.md
 cabal-version:       >=1.16
 
 library
-  build-depends:       base >= 4.6, text, mtl, transformers, sexp, attoparsec, containers, ansi-wl-pprint, bytestring
+  build-depends:       base >= 4.6, text, mtl, transformers, sexp, attoparsec, containers, ansi-wl-pprint, bytestring, parsec
   exposed-modules:     LispMachine.Instructions
                        Scheme.Lisp
                        Utils.RecursionSchemes
