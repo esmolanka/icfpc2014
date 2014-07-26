@@ -1,7 +1,13 @@
 (define (main world undocumented)
-  (let ((x 10)
-        (y 20))
-    (if (> x 20)
-        1
-        2)))
+  (map square (list 1 2 3 4 5)))
+
+(define (square x)
+  (* x x))
+
+(define (map f xs)
+  (if (and (atom? xs)
+           (== 0 xs))
+      0
+      (cons (f (car xs))
+            (map f (cdr xs)))))
 

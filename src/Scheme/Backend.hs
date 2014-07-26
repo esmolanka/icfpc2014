@@ -181,11 +181,6 @@ compileExpr = para alg
       sequence_ $ map fst xs
     alg (MakeClosure name) =
       functionLabel name >>= ldf
-    alg (StaticCall name args) = do
-      mapM_ fst args -- args must add something on data stack! <=> no args can be Assign node, for example
-      label <- functionLabel name
-      ldf label
-      ap $ length args
     alg (Call (x, _) args) = do
       mapM_ fst args
       x -- x must add closure cell on the stack
@@ -205,9 +200,12 @@ compileExpr = para alg
       ldc n
     alg (Constant (LiteralBool b)) = do
       ldc $ if b then 1 else 0
-    alg form@(And _ _) = error $ show (fmap snd form) ++ " form not supported yet"
-    alg form@(Or _ _) = error $ show (fmap snd form) ++ " form not supported yet"
-    alg form@(Cond _) = error $ show (fmap snd form) ++ " form not supported yet"
+    alg form@(TailCall _ _)                = error $ show (fmap snd form) ++ " form not supported yet"
+    alg form@(Constant (LiteralClosure _)) = error $ show (fmap snd form) ++ " form not supported yet"
+    alg form@(And _ _)                     = error $ show (fmap snd form) ++ " form not supported yet"
+    alg form@(Or _ _)                      = error $ show (fmap snd form) ++ " form not supported yet"
+    alg form@(Not _)                       = error $ show (fmap snd form) ++ " form not supported yet"
+    alg form@(Cond _)                      = error $ show (fmap snd form) ++ " form not supported yet"
     -- alg x = error $ show (fmap snd x) ++ " form not supported yet"
     -- alg (Cons x y)   = do
     --   tell []

@@ -149,13 +149,11 @@ parseSexp input =
         [S.Atom x] -> MakeClosure $ mkSymbol x
         _ -> error $ "invalid make-closure form: " ++ show form
     coalg (S.List (func: rest)) =
-      case func of
-        S.Atom name -> StaticCall (mkSymbol name) rest
-        _           -> Call func rest
+      Call func rest
     coalg (S.List []) = error "empty list"
 
-    coalg (S.Atom "#t") = Constant $ LiteralBool True
-    coalg (S.Atom "#f") = Constant $ LiteralBool False
+    coalg (S.Atom "#t") = constTrue
+    coalg (S.Atom "#f") = constFalse
     coalg (S.Atom name)
       | BS.all isDigit name = Constant $ LiteralInt $ read $ BS.unpack name
       | otherwise = Reference $ mkSymbol name
@@ -177,11 +175,33 @@ validateSchemeProg prog
     mainFunc = find ((== (Symbol "main")) . defName) prog
 
 desugar :: SchemeProg -> SchemeProg
-desugar prog = prog
-  -- map desugarDefine prog
-  -- where
-  --   desugarDefine :: Definition -> Definition
-  --   desugarDefine (Define name args body) = Define name args $ map desugarSexp body
-  --
-  --   desugarSexp :: Sexp -> Sexp
-  --   desugarSexp = cata
+desugar prog =
+  map desugarDefine prog
+  where
+    desugarDefine :: Definition -> Definition
+    desugarDefine (Define name args body) = Define name args $ map desugarSexp body
+
+    desugarSexp :: Sexp -> Sexp
+    desugarSexp = cata alg
+      where
+        alg :: SexpF Sexp -> Sexp
+        alg (And x y)    = Fix $ If x y (Fix constFalse)
+        alg (Or x y)     = Fix $ If x (Fix constTrue) y
+        alg (Not x)      = Fix $ If x (Fix constFalse) (Fix constTrue)
+        alg (Cond cases) =
+          -- foldr1 (\(test, body) cont -> Fix $ If test (Fix $ Begin body) cont) cases
+          foldr (\(test, body) cont -> Fix $ If test (Fix $ Begin body) cont)
+                (Fix constNil)
+                cases
+        alg form         = Fix form
+
+
+constNil :: SexpF a
+constNil = Constant $ LiteralInt 0
+
+constTrue :: SexpF a
+constTrue = Constant $ LiteralBool True
+
+constFalse :: SexpF a
+constFalse = Constant $ LiteralBool False
+

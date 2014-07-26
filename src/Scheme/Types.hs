@@ -36,6 +36,7 @@ data SexpF f = -- Define Symbol [Symbol] f
              | Let [(Symbol, f)] [f] -- parallel let
              | And f f
              | Or f f
+             | Not f
              | Cond [(f, [f])]
              | If f f f
              | Cmp CmpOp f f
@@ -43,7 +44,6 @@ data SexpF f = -- Define Symbol [Symbol] f
              | List [f]
              | Begin [f]
              | MakeClosure Symbol -- symbol must be a function name
-             | StaticCall Symbol [f] -- call to known function
              | Call f [f]
              | TailCall Symbol [f] -- will be introduced by transformation
              | Reference Symbol

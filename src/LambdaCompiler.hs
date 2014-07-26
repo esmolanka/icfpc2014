@@ -13,7 +13,7 @@ import Scheme.Frontend
 
 compile :: T.Text -> Either String String
 compile = parseSexp
-      >=> compileProg
+      >=> compileProg . desugar
       >=> flatten
       >=> (return . showProgram)
 
