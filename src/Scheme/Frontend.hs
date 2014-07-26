@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards     #-}
 
-module Scheme.Parse (parseSexp) where
+module Scheme.Frontend (parseSexp, desugar) where
 
 import Data.ByteString.Lazy.Char8 (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BS
@@ -42,12 +42,12 @@ parseSexp input =
       case rest of
         -- constant
         S.Atom name: body         -> Define (mkSymbol name)
-                                              []
-                                              body
+                                            []
+                                            body
         -- function
         S.List (name: args): body -> Define (atomToSymbol name)
-                                                (map atomToSymbol args)
-                                                body
+                                            (map atomToSymbol args)
+                                            body
         _ -> error $ "invalid define form: " ++ show form
     defCoalg form = error $ "expected define form instead of: " ++ show form
 
@@ -101,6 +101,22 @@ parseSexp input =
         analyzeBinding :: S.Sexp -> (Symbol, S.Sexp)
         analyzeBinding (S.List [S.Atom x, y]) = (mkSymbol x, y)
         analyzeBinding b = error $ "invalid let binding: " ++ show b
+    coalg form@(S.List (S.Atom "and": rest)) =
+      case rest of
+        [x, y] -> And x y
+        _ -> error $ "invalid and form: " ++ show form
+    coalg form@(S.List (S.Atom "or": rest)) =
+      case rest of
+        [x, y] -> Or x y
+        _ -> error $ "invalid or form: " ++ show form
+    coalg form@(S.List (S.Atom "cond": rest)) =
+      Cond $ map extractCondCase rest
+      where
+        extractCondCase (S.List xs) =
+          case xs of
+            test: body -> (test, body)
+            []         -> error $ "invalid cond form: " ++ show form
+        extractCondCase _           = error $ "invalid cond form: " ++ show form
     coalg form@(S.List (S.Atom "if": rest)) =
       case rest of
         [x, y, z] -> If x y z
@@ -160,5 +176,12 @@ validateSchemeProg prog
     redefinedNames = map (T.unpack . getSymbol . head) $ filter ((> 1) . length) groupedNames
     mainFunc = find ((== (Symbol "main")) . defName) prog
 
-
-
+desugar :: SchemeProg -> SchemeProg
+desugar prog = prog
+  -- map desugarDefine prog
+  -- where
+  --   desugarDefine :: Definition -> Definition
+  --   desugarDefine (Define name args body) = Define name args $ map desugarSexp body
+  --
+  --   desugarSexp :: Sexp -> Sexp
+  --   desugarSexp = cata

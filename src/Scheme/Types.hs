@@ -34,6 +34,9 @@ data SexpF f = -- Define Symbol [Symbol] f
              | Div f f
              | Assign Symbol f
              | Let [(Symbol, f)] [f] -- parallel let
+             | And f f
+             | Or f f
+             | Cond [(f, [f])]
              | If f f f
              | Cmp CmpOp f f
              | IsAtom f

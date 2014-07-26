@@ -5,6 +5,10 @@ import Prelude hiding (cycle,and)
 import GHC.AST
 import GHC.DSL
 import GHC.DSL.Interrupt
+import GHC.Pretty
+
+smart :: GHCM ()
+smart = undefined
 
 fickle :: GHCM ()
 fickle = do
@@ -33,11 +37,11 @@ miner = do
 flipper :: GHCM ()
 flipper = do
   withMyIndex $ \idx ->
-    withGhostPosition idx $ \x _y -> do
+    withGhostPosition Current idx $ \x _y -> do
       x `and` 1
       ifte (x =:= 1)
-        goUp
         goDown
+        goUp
   halt
 
 main :: IO ()
