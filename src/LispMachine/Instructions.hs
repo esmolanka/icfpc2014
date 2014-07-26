@@ -21,16 +21,16 @@ data Ref =
 
 data Statement = SetLabel Label
                | Instr (Instruction Ref)
-                 deriving (Show)
+                 deriving (Show, Eq, Ord)
 
-newtype Program = Program [Statement] deriving (Show)
+newtype Program = Program [Statement] deriving (Show, Eq, Ord)
 
 data AnnotatedInstruction = AnnotatedInstruction
     { aInstr :: Instruction AnnotatedAddr
     , aAnnotation :: Maybe String
-    } deriving (Show)
+    } deriving (Show, Eq, Ord)
 
-newtype FlatProgram = FlatProgram [AnnotatedInstruction] deriving (Show)
+newtype FlatProgram = FlatProgram [AnnotatedInstruction] deriving (Show, Eq, Ord)
 
 data Instruction a =
     LDC Int             -- load constant, args: constant
