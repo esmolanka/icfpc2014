@@ -23,9 +23,9 @@ library
                        LispMachine.Print
                        LispMachine.Flatten
                        LispMachine.Gen
-                       Scheme.Compiler
+                       Scheme.Frontend
                        Scheme.Types
-                       Scheme.Parse
+                       Scheme.Backend
                        Utils.RecursionSchemes
                        Utils.Utils
   hs-source-dirs:      src
