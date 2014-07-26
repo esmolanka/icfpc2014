@@ -7,8 +7,6 @@ import Data.ByteString.Lazy.Char8 (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BS
 import Data.Char
 import Data.List
-import Data.Set (Set)
-import qualified Data.Set as Set
 import Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy as T
 
@@ -43,11 +41,11 @@ parseSexp input =
     defCoalg form@(S.List (S.Atom "define": rest)) =
       case rest of
         -- constant
-        [S.Atom name, body]         -> Define (mkSymbol name)
+        S.Atom name: body         -> Define (mkSymbol name)
                                               []
                                               body
         -- function
-        [S.List (name: args), body] -> Define (atomToSymbol name)
+        S.List (name: args): body -> Define (atomToSymbol name)
                                                 (map atomToSymbol args)
                                                 body
         _ -> error $ "invalid define form: " ++ show form
@@ -96,7 +94,7 @@ parseSexp input =
         _ -> error $ "invalid / form: " ++ show form
     coalg form@(S.List (S.Atom "let": rest)) =
       case rest of
-        [S.List bindings, body] ->
+        S.List bindings: body ->
           Let (map analyzeBinding bindings) body
         _ -> error $ "invalid let form: " ++ show form
       where

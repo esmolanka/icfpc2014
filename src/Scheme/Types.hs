@@ -4,12 +4,9 @@
 
 module Scheme.Types where
 
-import Data.ByteString.Lazy.Char8 (ByteString)
-import qualified Data.ByteString.Lazy.Char8 as BS
 import Data.Foldable (Foldable)
 import Data.Traversable (Traversable)
 import Data.Text.Lazy (Text)
-import qualified Data.Text.Lazy as T
 
 import Utils.RecursionSchemes
 
@@ -37,7 +34,7 @@ data SexpF f = -- Define Symbol [Symbol] f
              | Mul f f
              | Div f f
              | Assign Symbol f
-             | Let [(Symbol, f)] f -- parallel let
+             | Let [(Symbol, f)] [f] -- parallel let
              | If f f f
              | Cmp CmpOp f f
              | IsAtom f
@@ -55,7 +52,7 @@ type Sexp = Fix SexpF
 data DefinitionF f = Define
                    { defName ::  Symbol
                    , defArgs :: [Symbol]
-                   , defBody :: f
+                   , defBody :: [f]
                    }
                    deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
 

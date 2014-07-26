@@ -1,7 +1,7 @@
 
 import LispMachine.Gen
 
-program :: GenM ()
+program :: GenM e ()
 program = do
   fn1 <- mkLabel
   ldc  21
@@ -16,8 +16,8 @@ program = do
     cons
     rtn
 
-test :: GenM () -> IO ()
-test = putStrLn . genToString
+test :: GenM () () -> IO ()
+test = putStrLn . genToString initEnv
 
 main :: IO ()
 main = test program

@@ -2,121 +2,124 @@
 module LispMachine.Gen where
 
 import Control.Monad.RWS hiding (ap)
+import Data.Text.Lazy (Text)
+import qualified Data.Text.Lazy as T
 
 import LispMachine.Instructions
 import LispMachine.Flatten
 import LispMachine.Print
 
-type Env = ()
-
 data GenState = GenState
     { lastLabelId :: Int
     } deriving (Show)
 
-newtype RRef = RRef Int deriving (Show)
+data RRef = RRef Text Int deriving (Show)
 
 toLabel :: RRef -> Label
-toLabel (RRef i) = "lbl_" ++ show i
+toLabel (RRef name i) = "lbl_" ++ T.unpack name ++ "_" ++ show i
 
 toRefLabel :: RRef -> Ref
 toRefLabel = Ref . toLabel
 
-type GenM = RWST Env [Statement] GenState (Either String)
+type GenM env = RWST env [Statement] GenState (Either String)
 
-putI :: Instruction Ref -> GenM ()
+putI :: Instruction Ref -> GenM e ()
 putI = tell . (:[]) . Instr
 
-putLabel :: RRef -> GenM ()
+putLabel :: RRef -> GenM e ()
 putLabel = tell . (:[]) . SetLabel . toLabel
 
-ldc :: Int -> GenM ()
+ldc :: Int -> GenM e ()
 ldc x = putI $ LDC x
 
-ld :: Int -> Int -> GenM ()
+ld :: Int -> Int -> GenM e ()
 ld n i = putI $ LD n i
 
-st :: Int -> Int -> GenM ()
+st :: Int -> Int -> GenM e ()
 st n i = putI $ ST n i
 
-add :: GenM ()
+add :: GenM e ()
 add = putI ADD
 
-sub :: GenM ()
+sub :: GenM e ()
 sub = putI SUB
 
-mul :: GenM ()
+mul :: GenM e ()
 mul = putI MUL
 
-div :: GenM ()
+div :: GenM e ()
 div = putI DIV
 
-ceq  :: GenM ()
+ceq  :: GenM e ()
 ceq = putI CEQ
 
-cgt  :: GenM ()
+cgt  :: GenM e ()
 cgt = putI CGT
 
-cgte :: GenM ()
+cgte :: GenM e ()
 cgte = putI CGTE
 
-atom :: GenM ()
+atom :: GenM e ()
 atom = putI ATOM
 
-cons :: GenM ()
+cons :: GenM e ()
 cons = putI CONS
 
-car  :: GenM ()
+car  :: GenM e ()
 car = putI CAR
 
-cdr  :: GenM ()
+cdr  :: GenM e ()
 cdr = putI CDR
 
-sel  :: RRef -> RRef -> GenM ()
+sel  :: RRef -> RRef -> GenM e ()
 sel t f = putI $ SEL (toRefLabel t) (toRefLabel f)
 
-join :: GenM ()
+join :: GenM e ()
 join = putI JOIN
 
-ldf  :: RRef -> GenM ()
+ldf  :: RRef -> GenM e ()
 ldf f = putI $ LDF (toRefLabel f)
 
-ap :: Int -> GenM ()
+ap :: Int -> GenM e ()
 ap n = putI $ AP n
 
-rtn  :: GenM ()
+rtn  :: GenM e ()
 rtn = putI RTN
 
-dum  :: Int -> GenM ()
+dum  :: Int -> GenM e ()
 dum n = putI $ DUM n
 
-rap  :: Int -> GenM ()
+rap  :: Int -> GenM e ()
 rap n = putI $ RAP n
 
-stop :: GenM ()
+stop :: GenM e ()
 stop = putI STOP
 
-tsel :: RRef -> RRef -> GenM ()
+tsel :: RRef -> RRef -> GenM e ()
 tsel t f = putI $ TSEL (toRefLabel t) (toRefLabel f)
 
-tap  :: Int -> GenM ()
+tap  :: Int -> GenM e ()
 tap n = putI $ TAP n
 
-trap :: Int -> GenM ()
+trap :: Int -> GenM e ()
 trap n = putI $ TRAP n
 
-dbug :: GenM ()
+dbug :: GenM e ()
 dbug = putI DBUG
 
-brk  :: GenM ()
+brk  :: GenM e ()
 brk = putI BRK
 
-mkLabel :: GenM RRef
-mkLabel = do
-  last <- gets lastLabelId
-  modify (\s -> s {lastLabelId = succ last})
-  return $ RRef $ succ last
+mkLabel :: GenM e RRef
+mkLabel = mkNamedLabel T.empty
 
-block :: RRef -> GenM a -> GenM a
+mkNamedLabel :: Text -> GenM e RRef
+mkNamedLabel name = do
+  lastId <- gets lastLabelId
+  modify (\s -> s {lastLabelId = succ lastId})
+  return $ RRef name $ succ lastId
+
+block :: RRef -> GenM e a -> GenM e a
 block ref gen = do
   putLabel ref
   gen
@@ -127,9 +130,9 @@ initEnv = ()
 initState :: GenState
 initState = GenState { lastLabelId = 0 }
 
-genProgram :: GenM () -> Either String Program
-genProgram gen = fmap (Program . thrd) $ runRWST gen initEnv initState
+genProgram :: e -> GenM e () -> Either String Program
+genProgram initEnv gen = fmap (Program . thrd) $ runRWST gen initEnv initState
     where thrd (_,_,x) = x
 
-genToString :: GenM () -> String
-genToString = showProgram . flatten . either error id . genProgram
+genToString :: e -> GenM e () -> String
+genToString initEnv = showProgram . flatten . either error id . genProgram initEnv

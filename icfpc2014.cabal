@@ -16,11 +16,13 @@ extra-source-files:  README.md
 cabal-version:       >=1.16
 
 library
-  build-depends:       base >= 4.6, text, mtl, transformers, sexp, attoparsec, containers, ansi-wl-pprint, bytestring, parsec, dlist
+  build-depends:       base >= 4.6, text, mtl, transformers, sexp, attoparsec,
+                       containers, ansi-wl-pprint, bytestring, parsec, dlist
   exposed-modules:     LispMachine.Instructions
                        LispMachine.Parse
                        LispMachine.Print
                        LispMachine.Flatten
+                       Scheme.Compiler
                        Scheme.Types
                        Scheme.Parse
                        Utils.RecursionSchemes
@@ -29,7 +31,16 @@ library
   ghc-options:         -W -Wall -fwarn-monomorphism-restriction -ferror-spans
 
 executable FlattenLispAsm
-  build-depends:       base >= 4.6, text, mtl, transformers, containers, ansi-wl-pprint, bytestring, parsec
+  build-depends:       base >= 4.6, text, mtl, transformers, containers,
+                       ansi-wl-pprint, bytestring, parsec
   hs-source-dirs:      src
   main-is:             FlattenLispAsm.hs
   default-language:    Haskell2010
+
+executable LambdaCompiler
+  build-depends:       base >= 4.6, text, mtl, transformers, containers,
+                       ansi-wl-pprint, bytestring, parsec, sexp
+  hs-source-dirs:      src
+  main-is:             LambdaCompiler.hs
+  default-language:    Haskell2010
+
