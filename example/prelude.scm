@@ -11,6 +11,10 @@
       (car xs)
       (nth (- i 1) (cdr xs))))
 
+;; (x,y) -> (y,x)
+(define (swap tuple)
+  (cons (cdr tuple) (car tuple)))
+
 ;; Checks for empty list.
 ;; NB: atom? check is necessary, otherwise we'll get tag error in
 ;; runtime
@@ -68,16 +72,16 @@
 ;; 3. the status of all the ghosts;
 ;; 4. the status of fruit at the fruit location.
 
-(define (get-world-map world)
+(define (world-map world)
   (first world))
 
-(define (get-lman-status world)
+(define (lm-status world)
   (second world))
 
-(define (get-ghost-status world)
+(define (ghost-status world)
   (third world))
 
-(define (get-fruit-status world)
+(define (fruit-status world)
   (fourth world))
 
 
@@ -92,23 +96,39 @@
 ;;   * 5: Lambda-Man starting position
 ;;   * 6: Ghost starting position
 
-(define (map-cell wmap row col)
-  (nth col (nth row wmap)))
+(define +wall+ 0)
+(define +empty+ 1)
+(define +pill+ 2)
+(define +power-pill+ 3)
+(define +fruit+ 4)
+(define +lm-start+ 5)
+(define +ghost-start+ 6)
 
-(define (wall? wmap row col)
-  (== 0 (map-cell wmap row col)))
-(define (empty? wmap row col)
-  (== 1 (map-cell wmap row col)))
-(define (pill? wmap row col)
-  (== 2 (map-cell wmap row col)))
-(define (power-pill? wmap row col)
-  (== 3 (map-cell wmap row col)))
-(define (fruit? wmap row col)
-  (== 4 (map-cell wmap row col)))
-(define (lman-start? wmap row col)
-  (== 5 (map-cell wmap row col)))
-(define (ghost-start? wmap row col)
-  (== 6 (map-cell wmap row col)))
+(define (map-cell wmap rowcol)
+  (nth (cdr rowcol) (nth (car rowcol) wmap)))
+
+(define (wall? wmap rowcol)
+  (== +wall+ (map-cell wmap rowcol)))
+(define (empty? wmap rowcol)
+  (== +empty+ (map-cell wmap rowcol)))
+(define (pill? wmap rowcol)
+  (== +pill+ (map-cell wmap rowcol)))
+(define (power-pill? wmap rowcol)
+  (== +power-pill+ (map-cell wmap rowcol)))
+(define (fruit? wmap rowcol)
+  (== +fruit+ (map-cell wmap rowcol)))
+(define (lman-start? wmap rowcol)
+  (== +lm-start+ (map-cell wmap rowcol)))
+(define (ghost-start? wmap rowcol)
+  (== +ghost-start+ (map-cell wmap rowcol)))
+
+(define (useful? wmap rowcol)
+  (or (pill? wmap rowcol)
+      (or (power-pill? wmap rowcol)
+          (fruit? wmap rowcol))))
+
+(define (non-blocked? wmap rowcol)
+  (not (== +wall+ (map-cell wmap rowcol))))
 
 (define (map-size wmap)
   (cons
@@ -189,10 +209,4 @@
 (define +right+ 1)
 (define +down+ 2)
 (define +left+ 3)
-
-;; The status of the fruit is a number which is a countdown to the expiry of
-;; the current fruit, if any.
-;;   * 0: no fruit present;
-;;   * n > 0: fruit present: the number of game ticks remaining while the
-;;            fruit will will be present.
 

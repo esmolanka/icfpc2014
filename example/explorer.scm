@@ -1,0 +1,33 @@
+(define (main world undocumented)
+  (cons 0 step))
+
+(define (get-up rowcol)
+  (cons (- (car rowcol) 1) (cdr rowcol)))
+
+(define (get-down rowcol)
+  (cons (+ (car rowcol) 1) (cdr rowcol)))
+
+(define (get-left rowcol)
+  (cons (car rowcol) (- (cdr rowcol) 1)))
+
+(define (get-right rowcol)
+  (cons (car rowcol) (+ (cdr rowcol) 1)))
+
+(define (step state world)
+  (let* ((wmap (world-map world))
+         (lman (lm-status world))
+         (loc (swap (lm-location lman)))
+         (up (get-up loc))
+         (down (get-down loc))
+         (left (get-left loc))
+         (right (get-right loc))
+         (dir (cond ((useful? wmap up) +up+)
+                    ((useful? wmap down) +down+)
+                    ((useful? wmap left) +left+)
+                    ((useful? wmap right) +right+)
+                    ((non-blocked? wmap up) +up+)
+                    ((non-blocked? wmap down) +down+)
+                    ((non-blocked? wmap left) +left+)
+                    ((non-blocked? wmap right) +right+)
+                    (#t 42))))
+    (cons 0 (debug-it dir))))
