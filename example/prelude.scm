@@ -10,9 +10,6 @@
       (car xs)
       (nth (- i 1) (cdr xs))))
 
-(define (and x y) (if x y #f))
-(define (or x y) (if x #t y))
-
 ;; Checks for empty list.
 ;; NB: atom? check is necessary, otherwise we'll get tag error in
 ;; runtime
@@ -36,7 +33,7 @@
   (if (nil? xs)
       0
       (if (pred (car xs))
-          (cons x (filter pred (cdr xs)))
+          (cons (car xs) (filter pred (cdr xs)))
           (filter pred (cdr xs)))))
 
 ;; uses Haskell foldr argument order
