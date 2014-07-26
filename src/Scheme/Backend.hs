@@ -151,7 +151,13 @@ compileExpr :: Sexp -> CompileM ()
 compileExpr = para alg
   where
     alg :: SexpF (CompileM (), Fix SexpF) -> CompileM ()
-    alg (Lambda _ _) = error "lambda not supported yet"
+    alg (Lambda args body) = do
+      label <- mkNamedLabel "lam"
+      ldf label
+      withFrameForArgs args $
+        standaloneBlock label $ do
+         mapM_ fst body
+         rtn
     alg (Cons (x, _) (y, _)) =
       x >> y >> cons
     alg (Car (x, _)) =
