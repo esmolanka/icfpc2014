@@ -135,4 +135,4 @@ genProgram initEnv gen = fmap (Program . thrd) $ runRWST gen initEnv initState
     where thrd (_,_,x) = x
 
 genToString :: e -> GenM e () -> String
-genToString initEnv = showProgram . flatten . either error id . genProgram initEnv
+genToString initEnv = either error showProgram . (flatten <=< genProgram initEnv)

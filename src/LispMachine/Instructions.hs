@@ -1,6 +1,9 @@
-{-# LANGUAGE DeriveFunctor  #-}
+{-# LANGUAGE DeriveFunctor, DeriveTraversable, DeriveFoldable  #-}
 
 module LispMachine.Instructions where
+
+import Data.Traversable
+import Data.Foldable
 
 newtype Addr = Addr Int deriving (Show, Eq, Ord)
 
@@ -52,5 +55,5 @@ data Instruction a =
   | TRAP Int            -- recursive environment tail-call function, args: number of arguments to copy
   | DBUG                -- printf debugging
   | BRK                 -- breakpoint debugging
-    deriving (Show, Eq, Ord, Functor)
+    deriving (Show, Eq, Ord, Functor, Traversable, Foldable)
 

@@ -61,9 +61,9 @@ resolveRef ref = do
     go frames (f:fs) n =
       maybe (go frames fs $ n + 1) (\k -> (n, k)) $ M.lookup ref $ getFrame f
 
-compileProg :: SchemeProg -> Program
+compileProg :: SchemeProg -> Either String Program
 compileProg prog =
-  either error id $ genProgram (Env []) $ do
+  genProgram (Env []) $ do
     compileFunc mainFunc
     mapM_ compileFunc otherFuncs
   where
