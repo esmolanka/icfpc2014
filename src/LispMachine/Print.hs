@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings, ViewPatterns #-}
-module LispMachine.Print where
+module LispMachine.Print
+    ( showProgram
+    , ppFlatProgram
+    ) where
 
 import Text.PrettyPrint.ANSI.Leijen
 
@@ -7,7 +10,6 @@ import LispMachine.Instructions
 
 showProgram :: FlatProgram -> String
 showProgram x = displayS (renderPretty 0.4 80 (ppFlatProgram x)) ""
-
 
 ppFlatProgram :: FlatProgram -> Doc
 ppFlatProgram (FlatProgram instrs) = vcat . map ppInstr $ instrs
@@ -28,8 +30,8 @@ toCol :: Int -> Doc -> Doc
 toCol n t = column (\c -> if c < n then text (replicate (n-c) ' ') <> t else t)
 
 ppInstr :: Instruction AnnotatedAddr -> Doc
-ppInstr (LDC c)   = instr "LDC" <+> int c
-ppInstr (LD n i)  = instr "LD" <+> int n <+> int i
+ppInstr (LDC c)   = instr "LDC"  <+> int c
+ppInstr (LD n i)  = instr "LD"   <+> int n <+> int i
 ppInstr ADD       = instr "ADD"
 ppInstr SUB       = instr "SUB"
 ppInstr MUL       = instr "MUL"
@@ -41,16 +43,16 @@ ppInstr ATOM      = instr "ATOM"
 ppInstr CONS      = instr "CONS"
 ppInstr CAR       = instr "CAR"
 ppInstr CDR       = instr "CDR"
-ppInstr (SEL t f) = instr "SEL" <+> ppAddr t <+> ppAddr f <+> ppComment (ppLabel t <+> ppLabel f)
+ppInstr (SEL t f) = instr "SEL"  <+> ppAddr t <+> ppAddr f <+> ppComment (ppLabel t <+> ppLabel f)
 ppInstr JOIN      = instr "JOIN"
-ppInstr (LDF f) = instr "LDF" <+> ppAddr f <+> ppComment (ppLabel f)
-ppInstr (AP n)    = instr "AP" <+> int n
+ppInstr (LDF f)   = instr "LDF"  <+> ppAddr f <+> ppComment (ppLabel f)
+ppInstr (AP n)    = instr "AP"   <+> int n
 ppInstr RTN       = instr "RTN"
-ppInstr (DUM n)   = instr "DUM" <+> int n
-ppInstr (RAP n)   = instr "RAP" <+> int n
+ppInstr (DUM n)   = instr "DUM"  <+> int n
+ppInstr (RAP n)   = instr "RAP"  <+> int n
 ppInstr STOP      = instr "STOP"
-ppInstr (TSEL t f) = instr "TSEL" <+> ppAddr t <+> ppAddr f <+> ppComment (ppLabel t <+> ppLabel f)
-ppInstr (TAP n)   = instr "TAP" <+> int n
+ppInstr (TSEL t f)= instr "TSEL" <+> ppAddr t <+> ppAddr f <+> ppComment (ppLabel t <+> ppLabel f)
+ppInstr (TAP n)   = instr "TAP"  <+> int n
 ppInstr (TRAP n)  = instr "TRAP" <+> int n
 ppInstr DBUG      = instr "DBUG"
 ppInstr BRK       = instr "BRK"

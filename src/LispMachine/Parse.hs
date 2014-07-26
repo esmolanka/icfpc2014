@@ -1,5 +1,8 @@
 {-# LANGUAGE RecordWildCards #-}
-module LispMachine.Parse where
+module LispMachine.Parse
+    ( parseLispAsm
+    , lispAsmParser
+    ) where
 
 import Control.Applicative hiding ((<|>))
 import Control.Arrow

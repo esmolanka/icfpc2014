@@ -1,5 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
-module LispMachine.Flatten where
+module LispMachine.Flatten
+    ( flatten
+    ) where
 
 import qualified Data.Map as M
 import Data.Maybe
