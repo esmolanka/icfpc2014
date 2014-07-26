@@ -33,7 +33,7 @@ newtype Env = Env { getEnv :: [Frame] }
 
 data CompileEnv = CompileEnv
                 { variableEnv :: Env
-                , functionEnv :: Map Symbol RRef
+                , functionEnv :: Map Symbol (DefinitionF RRef)
                 , constantEnv :: Map Symbol Sexp
                 }
                 deriving (Show, Eq, Ord)
@@ -61,8 +61,14 @@ withFrameForArgs args action = local (addFrame (mkFrame args)) action
 functionLabel :: Symbol -> CompileM RRef
 functionLabel name = do
   funcEnv <- asks functionEnv
-  maybe (error $ "unresolved function name: " ++ show (getSymbol name)) return $
+  maybe (error $ "unresolved function name: " ++ show (getSymbol name))
+        (return . defBody) $
     M.lookup name funcEnv
+
+functionArgumentCount :: Symbol -> CompileM (Maybe Int)
+functionArgumentCount name = do
+  funcEnv <- asks functionEnv
+  return $ length . defArgs <$> M.lookup name funcEnv
 
 resolveConstant :: Symbol -> CompileM Sexp
 resolveConstant name = do
@@ -98,7 +104,10 @@ isConstant name = M.member name <$> asks constantEnv
 compileProg :: SchemeProg -> Either String Program
 compileProg prog =
   genProgram initialEnv $ do
-    labels <- mapM (\name -> (name, ) <$> mkNamedLabel (getSymbol name)) funcNames
+    labels <- mapM (\func -> let name = defName func
+                             in (\label -> (name, fmap (const label) func)) <$>
+                             mkNamedLabel (getSymbol name))
+                   funcs
     let funcEnv = M.fromList labels
     local (\compEnv -> compEnv { functionEnv = funcEnv, constantEnv = constEnv }) $ do
       compileFunc mainFunc
@@ -204,9 +213,19 @@ compileExpr = para alg
       sequence_ $ map fst xs
     alg (MakeClosure name) =
       functionLabel name >>= ldf
-    alg (Call (x, _) args) = do
+    alg form@(Call (x, xExpr) args) = do
       mapM_ fst args
-      x -- x must add closure cell on the stack
+      case xExpr of
+        Fix (Reference name) -> do
+          argcount <- functionArgumentCount name
+          case argcount of
+            Just count
+              | count /= length args ->
+                error $ "function " ++ show (getSymbol name) ++ " expects " ++ show argcount ++
+                 " arguments: " ++ show (fmap snd form)
+              | otherwise -> x
+            _ -> x
+        _ -> x -- x must add closure cell on the stack
       ap $ length args
     alg (Debug (x, _)) =
       x >> dbug

@@ -59,13 +59,13 @@ type Sexp = Fix SexpF
 data DefinitionF f = Define
                    { defName       ::  Symbol
                    , defArgs       :: [Symbol]
-                   , defBody       :: [f]
+                   , defBody       :: f
                    , defInlinable  :: Bool -- whether this form is inlinable
                    , defIsConstant :: Bool -- whether is was defined as a constant
                    }
                    deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type Definition = DefinitionF Sexp
+type Definition = DefinitionF [Sexp]
 
 type SchemeProg = [Definition]
 

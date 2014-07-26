@@ -7,9 +7,54 @@ import GHC.DSL
 import GHC.DSL.Interrupt
 import GHC.Pretty
 
-smart :: GHCM ()
-smart = undefined
+-- Always move in the direction of the lambda man (first one)
+-- End up cycling very fast
+simple :: GHCM ()
+simple = do
+  withLambdaManPosition 1 $ \lx ly -> do
+    withMyPosition $ \px py -> do
+      ifte (px <: lx)
+        goRight $
+        ifte (px >: lx)
+           goLeft $
+           ifte (py <: ly)
+              goDown
+              goUp
+  halt
 
+-- Always move in the direction of the lambda man (first one)
+-- Check X coordinate first if current direction is 0|1
+-- Otherwise checks Y coordinate first
+follower1 :: GHCM ()
+follower1 = do
+  withLambdaManPosition 1 $ \lx ly -> do
+    withMyIndex $ \idx ->
+      withGhostPosition Current idx $ \px py -> do
+        withDirectionAndVitality idx $ \_vit dir ->
+          ifte (dir <: 2)
+            (checkYFirst (px,py) (lx,ly))
+            (checkXFirst (px,py) (lx,ly))
+  halt
+  where
+    checkXFirst (px,py) (lx,ly) = do
+      ifte (px <: lx)
+        goRight $
+        ifte (px >: lx)
+           goLeft $
+           ifte (py <: ly)
+              goDown
+              goUp
+
+    checkYFirst (px,py) (lx,ly) = do
+      ifte (py <: ly)
+        goDown $
+        ifte (py >: ly)
+           goUp $
+           ifte (px <: lx)
+              goRight
+              goLeft
+
+-- 148105
 fickle :: GHCM ()
 fickle = do
    withVar3 inifinity 0 (-1) $ \a b c -> do
@@ -45,7 +90,7 @@ flipper = do
   halt
 
 main :: IO ()
-main = putStrLn $ prettyProgram $ flatten $ runGHCM fickle
+main = putStrLn $ prettyProgram $ flatten $ runGHCM follower1
 
 test :: IO ()
-test = putStrLn $ pretty $ flatten $ runGHCM fickle
+test = putStrLn $ pretty $ flatten $ runGHCM follower1
