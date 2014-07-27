@@ -13,6 +13,14 @@
                       (tailcall go (- i 1) (cdr xs))))))
     (go i xs)))
 
+(define (member-by eq-pred x xs)
+  (cond ((nil? xs)
+         #f)
+        ((eq-pred x (car xs))
+         #t)
+        (#t
+         (member-by eq-pred x (cdr xs)))))
+
 ;; (x,y) -> (y,x)
 (define (swap tuple)
   (cons (cdr tuple) (car tuple)))
