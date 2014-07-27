@@ -7,9 +7,9 @@
 
 ;; unsafe when index is out of bounds
 (define (nth i xs)
-  (if (== i 0)
-      (car xs)
-      (nth (- i 1) (cdr xs))))
+  (if-then-recur (== i 0)
+                 (car xs)
+                 ((- i 1) (cdr xs))))
 
 ;; (x,y) -> (y,x)
 (define (swap tuple)
@@ -18,7 +18,9 @@
 ;; Checks for empty list.
 ;; NB: atom? check is necessary, otherwise we'll get tag error in
 ;; runtime
-(define (nil? xs) (and (atom? xs) (== xs 0)))
+(define (nil? xs) (and (atom? xs) (== xs +nil+)))
+
+(define +nil+ 0)
 
 ;; Pattern match for lists.
 (define (match xs nil_case cons_case)
@@ -48,9 +50,11 @@
       (f (car xs) (foldr f acc (cdr xs)))))
 
 (define (length xs)
-  (if (nil? xs)
-      0
-      (+ 1 (length (cdr xs)))))
+  (let ((iter (lambda (xs n)
+                (if-then-recur (nil? xs)
+                               n
+                               ((cdr xs) (+ n 1))))))
+    (iter xs 0)))
 
 ;; Debug helpers
 

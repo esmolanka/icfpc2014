@@ -1,13 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards     #-}
 
-module Scheme.Frontend (parseSexp, desugar, optimize) where
+module Scheme.Frontend
+  ( parseSexp
+  , desugar
+  , optimize
+  , allUsedFunctions
+  , collectDefRefs
+  , collectRefs
+  )
+where
 
+import Control.Arrow
 import Data.ByteString.Lazy.Char8 (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BS
 import Data.Char
 import qualified Data.Foldable as F
 import Data.List
+import qualified Data.Map as M
+import Data.Monoid
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text.Lazy (Text)
@@ -192,7 +203,8 @@ parseSexp input =
     coalg (S.Atom "#t") = constTrue
     coalg (S.Atom "#f") = constFalse
     coalg (S.Atom name)
-      | BS.all isDigit name = Constant $ LiteralInt $ read $ BS.unpack name
+      | BS.all (\c -> isDigit c || (BS.length name > 1 && (c == '+' || c == '-'))) name =
+        Constant $ LiteralInt $ read $ BS.unpack name
       | otherwise = Reference $ mkSymbol name
 
 validateSchemeProg :: SchemeProg -> Either String SchemeProg
@@ -209,7 +221,7 @@ validateSchemeProg prog
   where
     names        = map defName prog
     groupedNames :: [[Symbol]]
-    groupedNames = group names
+    groupedNames = group $ sort names
     redefinedNames = map (T.unpack . getSymbol . head) $ filter ((> 1) . length) groupedNames
     mainFunc = find ((== (Symbol "main")) . defName) prog
 
@@ -250,22 +262,41 @@ optimize = map (fmap (map optimizeExpr))
     alg (Not (Fix (Not x)))    = x
     alg e                      = Fix e
 
-collectReferences :: Sexp -> Set Symbol
-collectReferences = cata alg
+allUsedFunctions :: SchemeProg -> Set Symbol
+allUsedFunctions prog = go (S.singleton (Symbol "main"))
+                           (mainReferences `S.intersection` funcNames)
+  where
+    progDict       = M.fromList $ map (defName &&& id) prog
+    funcNames      = M.keysSet progDict
+    mainReferences = collectDefRefs $ progDict M.! (Symbol "main")
+
+    go :: Set Symbol -> Set Symbol -> Set Symbol
+    go visited toVisit
+      | S.null toVisit = visited
+      | otherwise      =
+        go visited' ((toVisit' `S.intersection` funcNames) `S.difference` visited')
+      where
+        visited' = visited `S.union` toVisit
+        toVisit' = F.foldMap (\sym -> collectDefRefs $ progDict M.! sym)
+                             toVisit
+
+collectDefRefs :: Definition -> Set Symbol
+collectDefRefs (Define _ args body _ _) =
+  (F.foldMap collectRefs body) `S.difference` S.fromList args
+
+collectRefs :: Sexp -> Set Symbol
+collectRefs = cata alg
   where
     alg :: SexpF (Set Symbol) -> Set Symbol
-    alg (Reference name)    = S.singleton name
-    alg (Lambda args body) =
+    alg (Reference name)        = S.singleton name
+    alg (Lambda args body)      =
       F.fold body `S.difference` S.fromList args
-    alg (Let bindings body) =
-      F.fold body `S.difference` boundNames
+    alg (Let bindings body)     =
+      (F.fold body <> F.foldMap snd bindings) `S.difference` boundNames
       where
-        boundNames = S.fromList $ map fst bindings
-    alg (LetStar bindings body) =
-      F.fold body `S.difference` boundNames
-      where
-        boundNames = S.fromList $ map fst bindings
-    alg e                   = F.fold e
+        boundNames              = S.fromList $ map fst bindings
+    alg (LetStar bindings body) = error "collectRefs: let* not supported, should be desugared"
+    alg e                       = F.fold e
 
 constNil :: SexpF a
 constNil = Constant $ LiteralInt 0

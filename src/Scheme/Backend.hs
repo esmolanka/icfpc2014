@@ -15,11 +15,13 @@ import Data.List
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
+import qualified Data.Set as S
 -- import Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy as T
 
 import LispMachine.Instructions
 import LispMachine.Gen
+import Scheme.Frontend
 import Scheme.Types
 import Utils.RecursionSchemes
 
@@ -108,19 +110,20 @@ compileProg prog =
     labels <- mapM (\func -> let name = defName func
                              in (\label -> (name, fmap (const label) func)) <$>
                              mkNamedLabel (getSymbol name))
-                   funcs
+                   otherFuncs
     let funcEnv = M.fromList labels
     local (\compEnv -> compEnv { functionEnv = funcEnv, constantEnv = constEnv }) $ do
       compileFunc mainFunc
-      mapM_ compileFunc funcs
+      mapM_ compileFunc otherFuncs
   where
     initialEnv = CompileEnv (Env [])
                             (error "funcEnv not initialized")
                             (error "constantEnv not initialized")
                             (Calls [])
-    ([mainFunc], otherNames) = partition ((== Symbol "main") . defName) prog
-    (constants, funcs)       = partition defIsConstant otherNames
-    _funcNames               = map defName funcs
+    (constants, funcs)       = partition defIsConstant prog
+    funcs'                   = map (defDict M.!) $ S.toList $ allUsedFunctions funcs
+    ([mainFunc], otherFuncs) = partition ((== Symbol "main") . defName) funcs'
+    defDict                  = M.fromList $ map (defName &&& id) prog
     constEnv                 = M.fromList $ map (defName &&& getBody) constants
       where
         getBody :: Definition -> Sexp
