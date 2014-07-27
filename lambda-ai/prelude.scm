@@ -13,6 +13,10 @@
                       (tailcall go (- i 1) (cdr xs))))))
     (go i xs)))
 
+
+(define (manhattan-distance x y)
+  (+ x y))
+
 (define (member-by eq-pred x xs)
   (cond ((nil? xs)
          #f)

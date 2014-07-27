@@ -104,6 +104,10 @@ showSchemeProg prog = T.pack $ displayS (renderPretty 1.0 80 $ vcat $ map showDe
                                   text "let" <+>
                                   align (parens (vcat $ map (\(name, x) -> parens (nameDoc name <+> x)) bindings)) <$>
                                   indent 2 (vcat body)
+    alg (LetRec bindings body)  = parens $
+                                    text "letrec" <+>
+                                    align (parens (vcat $ map (\(name, x) -> parens (nameDoc name <+> x)) bindings)) <$>
+                                    indent 2 (vcat body)
     alg (LetStar _ _)           = error "cannot prettyprint let*"
     alg (And x y)               = parens $ text "and" <+> align (x <$> y)
     alg (Or x y)                = parens $ text "or" <+> align (x <$> y)
@@ -123,17 +127,13 @@ showSchemeProg prog = T.pack $ displayS (renderPretty 1.0 80 $ vcat $ map showDe
     alg (Call f args)           = parens $ f <+> align (vsep args)
     alg (Debug x)               = parens $ text "debug" <+> x
     alg (Break)                 = parens $ text "break"
-    alg (TailCall _ _)          = error "cannot prettyprint tail call"
+    alg (TailCall sym args)     = parens $ text "tailcall" <+> (nameDoc sym) <+> align (vsep args)
+    alg (TailExit res)          = parens $ text "#tailexit#" <+> res
     alg (Reference name)        = nameDoc name
     alg (Constant lit)          = case lit of
                                     LiteralInt n -> int n
                                     LiteralBool b -> text $ if b then "#t" else "#f"
                                     _ -> error "cannot prettyprint literal closure"
-    alg (LetRec bindings body)  = parens $
-                                    text "letrec" <+>
-                                    align (parens (vcat $ map (\(name, x) -> parens (nameDoc name <+> x)) bindings)) <$>
-                                    indent 2 (vcat body)
-    alg (TailExit _)            = error "cannot prettyprint TailExit"
 
     nameDoc :: Symbol -> Doc
     nameDoc = text . T.unpack . getSymbol
