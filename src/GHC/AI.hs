@@ -139,19 +139,15 @@ predator searchPeriod getOutPeriod = do
 
         makeSearchMove =
           withLambdaManPosition 1 $ \lx ly -> do
-            withMyIndex $ \idx ->
-              withGhostPosition Current idx $ \px py -> do
-                -- withDirectionAndVitality idx $ \_vit dir ->
-                  withVar2 0 0 $ \dx dy -> do
-                    dx =: lx
-                    dy =: ly
-                    dx `absDiff` px
-                    dy `absDiff` py
-                    ifte (dx <: dy)
-                      (checkXFirst (px,py) (lx,ly))
-                      (checkYFirst (px,py) (lx,ly))
-
-                  -- ifte (dir <: 2)
+            withMyPosition $ \px py ->
+              withVar2 0 0 $ \dx dy -> do
+                dx =: lx
+                dy =: ly
+                dx `absDiff` px
+                dy `absDiff` py
+                ifte (dx <: dy)
+                  (checkYFirst (px,py) (lx,ly))
+                  (checkXFirst (px,py) (lx,ly))
 
 checkXFirst :: (Var,Var) -> (Var,Var) -> GHCM ()
 checkXFirst (px,py) (lx,ly) = do
@@ -194,20 +190,20 @@ fickle = do
        inc (mem dir)
 
 miner :: GHCM ()
-miner = do
-  goDown
+miner = goDown
 
 flipper :: GHCM ()
-flipper = do
-  withMyIndex $ \idx ->
-    withGhostPosition Current idx $ \x _y -> do
-      x `and` 1
-      ifte (x =:= 1)
-        goDown
-        goUp
+flipper =
+  withMyPosition $ \x _y -> do
+    x `and` 1
+    ifte (x =:= 1)
+      goDown
+      goUp
 
 main :: IO ()
-main = putStrLn $ prettyProgram $ flatten $ runGHCM $ predator 50 10
+main = putStrLn $ prettyProgram $ flatten $ runGHCM $
+       predator 50 20
 
 test :: IO ()
-test = putStrLn $ pretty $ flatten $ runGHCM $ predator 50 10
+test = putStrLn $ pretty $ flatten $ runGHCM $
+       predator 50 20

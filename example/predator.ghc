@@ -1,0 +1,138 @@
+jeq 43,[5],0 ; 0
+jeq 36,[1],20 ; 1
+jeq 19,[2],0 ; 2
+mov H,0
+int 3
+mov H,A
+mov G,0
+mov F,0
+mov A,H
+int 6
+mov G,A
+mov F,B
+jeq 15,F,3 ; 12
+inc F
+jeq 16,0,0
+mov F,0 ; 15
+mov A,F ; 16
+int 0
+jeq 34,0,0
+mov H,0 ; 19
+int 3
+mov H,A
+mov G,0
+mov F,0
+mov A,H
+int 6
+mov G,A
+mov F,B
+jeq 31,F,0 ; 28
+dec F
+jeq 32,0,0
+mov F,3 ; 31
+mov A,F ; 32
+int 0
+inc [1] ; 34
+jeq 42,0,0
+inc [5] ; 36
+and [5],1
+inc [2]
+and [2],1
+mov [0],0
+mov [1],0
+jeq 137,0,0 ; 42
+mov H,0 ; 43
+int 3
+mov H,A
+mov G,0
+mov F,0
+mov A,H
+int 5
+mov G,A
+mov F,B
+jeq 67,[0],0 ; 52
+mov E,0
+jeq 56,G,[3] ; 54
+jeq 57,0,0
+inc E ; 56
+jeq 59,F,[4] ; 57
+jeq 60,0,0
+inc E ; 59
+jeq 62,E,2 ; 60
+jeq 66,0,0
+inc [5] ; 62
+and [5],1
+mov [1],0
+mov [0],0
+jeq 69,0,0 ; 66
+mov [3],G ; 67
+mov [4],F
+mov H,0 ; 69
+mov G,0
+int 1
+mov H,A
+mov G,B
+mov F,0
+int 3
+mov F,A
+mov E,0
+mov D,0
+mov A,F
+int 5
+mov E,A
+mov D,B
+mov C,0
+mov B,0
+mov C,H
+mov B,G
+jgt 93,C,E ; 87
+mov A,0
+mov A,E
+sub A,C
+mov C,A
+jeq 94,0,0
+sub C,E ; 93
+jgt 100,B,D ; 94
+mov A,0
+mov A,D
+sub A,B
+mov B,A
+jeq 101,0,0
+sub B,D ; 100
+jlt 117,C,B ; 101
+jlt 114,E,H ; 102
+jgt 111,E,H ; 103
+jlt 108,D,G ; 104
+mov A,0
+int 0
+jeq 110,0,0
+mov A,2 ; 108
+int 0
+jeq 113,0,0 ; 110
+mov A,3 ; 111
+int 0
+jeq 116,0,0 ; 113
+mov A,1 ; 114
+int 0
+jeq 131,0,0 ; 116
+jlt 129,D,G ; 117
+jgt 126,D,G ; 118
+jlt 123,E,H ; 119
+mov A,3
+int 0
+jeq 125,0,0
+mov A,1 ; 123
+int 0
+jeq 128,0,0 ; 125
+mov A,0 ; 126
+int 0
+jeq 131,0,0 ; 128
+mov A,2 ; 129
+int 0
+inc [0] ; 131
+mov H,0
+mov H,[0]
+div H,50
+mul H,50
+sub [0],H
+hlt ; 137
