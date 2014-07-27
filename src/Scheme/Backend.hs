@@ -8,7 +8,7 @@ module Scheme.Backend where
 import Control.Applicative
 import Control.Arrow
 import Control.Monad.Reader hiding (ap, join)
--- import Control.Monad.Error
+import Control.Monad.Error (throwError)
 -- import Control.Monad.State
 -- import Control.Monad.Writer
 import Data.List
@@ -31,31 +31,32 @@ newtype Frame = Frame { getFrame :: Map Symbol Int }
 newtype Env = Env { getEnv :: [Frame] }
             deriving (Show, Eq, Ord)
 
+newtype Calls = Calls { getCalls :: [(Symbol, Int, RRef)] }
+              deriving (Show, Eq, Ord)
+
 data CompileEnv = CompileEnv
                 { variableEnv :: Env
                 , functionEnv :: Map Symbol (DefinitionF RRef)
                 , constantEnv :: Map Symbol Sexp
+                , callEnv     :: Calls
                 }
                 deriving (Show, Eq, Ord)
 
 type CompileM a = GenM CompileEnv a
--- newtype CompileM a = CompileM { runCompileM :: GenM Env a }
---                    deriving ( Functor
---                             , Applicative
---                             , Monad
---                             , MonadReader Env
---                             , MonadWriter [Statement]
---                             , MonadState GenState
---                             , MonadError String
---                             )
 
 mkFrame :: [Symbol] -> Frame
 mkFrame args = Frame $ M.fromList $ zip args [0..]
 
+withCall :: Symbol -> Int -> RRef -> CompileM a -> CompileM a
+withCall name argcount lbl action = local addCall action
+  where
+    addCall env@(CompileEnv _ _ _ (Calls calls)) =
+        env { callEnv = Calls ((name, argcount, lbl) : calls)}
+
 withFrameForArgs :: [Symbol] -> CompileM a -> CompileM a
 withFrameForArgs args action = local (addFrame (mkFrame args)) action
   where
-    addFrame frame compileEnv@(CompileEnv (Env frames) _ _) =
+    addFrame frame compileEnv@(CompileEnv (Env frames) _ _ _) =
       compileEnv { variableEnv = (Env $ frame: frames) }
 
 functionLabel :: Symbol -> CompileM RRef
@@ -116,9 +117,10 @@ compileProg prog =
     initialEnv = CompileEnv (Env [])
                             (error "funcEnv not initialized")
                             (error "constantEnv not initialized")
+                            (Calls [])
     ([mainFunc], otherNames) = partition ((== Symbol "main") . defName) prog
     (constants, funcs)       = partition defIsConstant otherNames
-    funcNames                = map defName funcs
+    _funcNames               = map defName funcs
     constEnv                 = M.fromList $ map (defName &&& getBody) constants
       where
         getBody :: Definition -> Sexp
@@ -135,7 +137,7 @@ compileProg prog =
 
 compileFunc :: Definition -> CompileM ()
 compileFunc (Define (Symbol "main") args body _ _) = do
-  withFrameForArgs args $ do
+  withCall (Symbol "main") 2 (RRef "main" 0) $ withFrameForArgs args $ do
     mapM_ compileExpr body
     rtn
 compileFunc (Define name args body _isInlinable isConst) = do
@@ -143,7 +145,7 @@ compileFunc (Define name args body _isInlinable isConst) = do
   -- label <- mkNamedLabel $ getSymbol name
   label <- functionLabel name
   block label $
-    withFrameForArgs args $ do
+    withCall name (length args) label $ withFrameForArgs args $ do
       mapM_ compileExpr body
       rtn
 
@@ -154,10 +156,11 @@ compileExpr = para alg
     alg (Lambda args body) = do
       label <- mkNamedLabel "lam"
       ldf label
-      withFrameForArgs args $
+      withCall (Symbol "<lambda>") (length args) label $ withFrameForArgs args $
         standaloneBlock label $ do
          mapM_ fst body
          rtn
+
     alg (Cons (x, _) (y, _)) =
       x >> y >> cons
     alg (Car (x, _)) =
@@ -165,8 +168,7 @@ compileExpr = para alg
     alg (Cdr (x, _)) =
       x >> cdr
     alg (Add (x, _) (y, _)) =
-      x >> y >> -- data stack must contain two items after this!
-        add
+      x >> y >> add
     alg (Sub (x, _) (y, _)) =
       x >> y >> sub
     alg (Mul (x, _) (y, _)) =
@@ -177,6 +179,7 @@ compileExpr = para alg
       x -- x must store to data stack!
       (n, k) <- resolveVar ref
       st n k
+
     alg (Let bindings body) = do
       -- handle let as usual in scheme:
       -- (let ((foo 1)
@@ -197,6 +200,7 @@ compileExpr = para alg
         standaloneBlock label $ do
          mapM_ fst body
          rtn
+
     alg (If (c, _) (t, _) (f, _)) = do
       trueLabel <- mkNamedLabel "true_br"
       falseLabel <- mkNamedLabel "false_br"
@@ -204,21 +208,25 @@ compileExpr = para alg
       sel trueLabel falseLabel
       standaloneBlock trueLabel (t >> join)
       standaloneBlock falseLabel (f >> join)
-    alg (Cmp op (x, _) (y, _)) = do
-      x
-      y
-      case op of
-        CmpEq -> ceq
-        CmpGt -> cgt
-        CmpGe -> cgte
+
+    alg (Cmp op (x, _) (y, _)) =
+        x >> y >> case op of
+                    CmpEq -> ceq
+                    CmpGt -> cgt
+                    CmpGe -> cgte
+
     alg (IsAtom (x, _)) =
       x >> atom
+
     alg (List xs) =
       foldr (\h t -> h >> t >> cons) (ldc 0) $ map fst xs
+
     alg (Begin xs) =
       sequence_ $ map fst xs
+
     alg (MakeClosure name) =
       functionLabel name >>= ldf
+
     alg form@(Call (x, xExpr) args) = do
       mapM_ fst args
       case xExpr of
@@ -227,15 +235,38 @@ compileExpr = para alg
           case argcount of
             Just count
               | count /= length args ->
-                error $ "function " ++ show (getSymbol name) ++ " expects " ++ show argcount ++
-                 " arguments: " ++ show (fmap snd form)
+                throwError $ "Function " ++ show (getSymbol name) ++ " expects " ++ show argcount ++
+                 " arguments: \n" ++ show (fmap snd form)
               | otherwise -> x
             _ -> x
+        Fix (Lambda largs _) -> do
+          let argcount = length largs
+          when (length args /= argcount) $
+               throwError $ "Lambda expects " ++ show argcount ++
+                              " arguments: \n" ++ show (fmap snd form)
         _ -> x -- x must add closure cell on the stack
       ap $ length args
+
+    alg form@(Recur (cond,_) (true,_) args) = do
+      (name, argcount, label) <- asks (head . getCalls . callEnv)
+      when (length args /= argcount) $
+           throwError $ "While recuring, function " ++ show (getSymbol name) ++ " expects " ++ show argcount ++
+                      " arguments: \n" ++ show (fmap snd form)
+      trivLabel <- mkNamedLabel "triv_br"
+      recurLabel <- mkNamedLabel "recur_br"
+      cond
+      tsel trivLabel recurLabel
+      standaloneBlock trivLabel (true >> rtn)
+      standaloneBlock recurLabel $ do
+        mapM_ fst args
+        ldf label
+        tap (length args)
+
     alg (Debug (x, _)) =
       x >> dbug
+
     alg (Break) = brk
+
     alg (Reference name) = do
       var      <- isVar name
       func     <- isFunc name
@@ -250,18 +281,19 @@ compileExpr = para alg
           | constant ->
             resolveConstant name >>= compileExpr
           | otherwise -> error $ "unresolved reference: " ++ show (getSymbol name)
+
     alg (Constant (LiteralInt n)) = do
       ldc n
+
     alg (Constant (LiteralBool b)) = do
       ldc $ if b then 1 else 0
-    alg form@(TailCall _ _)                = error $ show (fmap snd form) ++ " form not supported yet"
-    alg form@(Constant (LiteralClosure _)) = error $ show (fmap snd form) ++ " form not supported yet"
-    alg form@(And _ _)                     = error $ show (fmap snd form) ++ " form must be desugared"
-    alg form@(Or _ _)                      = error $ show (fmap snd form) ++ " form must be desugared"
-    alg form@(Not _)                       = error $ show (fmap snd form) ++ " form must be desugared"
-    alg form@(Cond _)                      = error $ show (fmap snd form) ++ " form must be desugared"
-    alg form@(LetStar _ _)                 = error $ show (fmap snd form) ++ " form must be desugared"
-    -- alg x = error $ show (fmap snd x) ++ " form not supported yet"
-    -- alg (Cons x y)   = do
-    --   tell []
+
+    alg form@(TailCall _ _)                = throwError $ show (fmap snd form) ++ " form not supported yet"
+    alg form@(Constant (LiteralClosure _)) = throwError $ show (fmap snd form) ++ " form not supported yet"
+
+    alg form@(And _ _)                     = throwError $ show (fmap snd form) ++ " form must be desugared"
+    alg form@(Or _ _)                      = throwError $ show (fmap snd form) ++ " form must be desugared"
+    alg form@(Not _)                       = throwError $ show (fmap snd form) ++ " form must be desugared"
+    alg form@(Cond _)                      = throwError $ show (fmap snd form) ++ " form must be desugared"
+    alg form@(LetStar _ _)                 = throwError $ show (fmap snd form) ++ " form must be desugared"
 

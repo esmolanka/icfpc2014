@@ -32,12 +32,12 @@ library
   default-language:    Haskell2010
   ghc-options:         -W -Wall -fwarn-monomorphism-restriction -ferror-spans
 
-executable FlattenLispAsm
-  build-depends:       base >= 4.6, text, mtl, transformers, containers,
-                       ansi-wl-pprint, bytestring, parsec
-  hs-source-dirs:      src
-  main-is:             FlattenLispAsm.hs
-  default-language:    Haskell2010
+--executable FlattenLispAsm
+--  build-depends:       base >= 4.6, text, mtl, transformers, containers,
+--                       ansi-wl-pprint, bytestring, parsec
+--  hs-source-dirs:      src
+--  main-is:             FlattenLispAsm.hs
+--  default-language:    Haskell2010
 
 executable LambdaCompiler
   build-depends:       base >= 4.6, text, mtl, transformers, containers,

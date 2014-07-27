@@ -138,12 +138,17 @@ standaloneBlock ref gen =
     toCondBlock :: ([Statement], [StandaloneBlock]) -> ([Statement], [StandaloneBlock])
     toCondBlock res@([], _) = res
     toCondBlock (xs, ys)
-      | end /= Instr JOIN && end /= Instr RTN =
-        error $ "conditional block does not end in JOIN:\n" ++ show xs
+      | not (isValidEnding end) =
+        error $ "conditional block does not end in JOIN|RTN|TAP#|TRAP#:\n" ++ show xs
       | otherwise             =
         (mempty, ys ++ [StandaloneBlock xs])
       where
         end = last xs
+        isValidEnding (Instr (TAP _))  = True
+        isValidEnding (Instr (TRAP _)) = True
+        isValidEnding (Instr RTN)      = True
+        isValidEnding (Instr JOIN)     = True
+        isValidEnding _                = False
 
 initEnv :: ()
 initEnv = ()

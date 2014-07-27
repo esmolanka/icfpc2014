@@ -181,8 +181,12 @@ parseSexp input =
       case rest of
         [] -> Break
         _ -> error $ "invalid break form: " ++ show form
+    coalg form@(S.List (S.Atom "if-then-recur": rest)) =
+        case rest of
+          [cond, retval, S.List args] -> Recur cond retval args
+          _ -> error $ "invalid if-then-recur form: " ++ show form
     coalg (S.List (func: rest)) =
-      Call func rest
+        Call func rest
     coalg (S.List []) = error "empty list"
 
     coalg (S.Atom "#t") = constTrue

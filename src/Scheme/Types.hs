@@ -33,8 +33,8 @@ data SexpF f = -- Define Symbol [Symbol] f
              | Mul f f
              | Div f f
              | Assign Symbol f
-             | Let [(Symbol, f)] [f] -- parallel let
-             | LetStar [(Symbol, f)] [f] -- sequential let
+             | Let [(Symbol, f)] [f] -- ^ parallel let
+             | LetStar [(Symbol, f)] [f] -- ^ sequential let
              | And f f
              | Or f f
              | Not f
@@ -44,14 +44,15 @@ data SexpF f = -- Define Symbol [Symbol] f
              | IsAtom f
              | List [f]
              | Begin [f]
-             | MakeClosure Symbol -- symbol must be a function name
+             | MakeClosure Symbol -- ^ symbol must be a function name
              | Call f [f]
              | Debug f
              | Break
-             | TailCall Symbol [f] -- will be introduced by transformation
+             | TailCall Symbol [f] -- ^ will be introduced by transformation
              | Reference Symbol
-             -- | Quote f
+             {- | Quote f -}
              | Constant Literal
+             | Recur f f [f] -- ^ cond, return value, recursion args; tail-calls current function with provided set of arguments
              deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Sexp = Fix SexpF
