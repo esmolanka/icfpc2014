@@ -5,7 +5,6 @@
 module Scheme.Types where
 
 import Data.Foldable (Foldable)
-import Data.Monoid
 import Data.Traversable (Traversable)
 import Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy as T
@@ -105,11 +104,11 @@ showSchemeProg prog = T.pack $ displayS (renderPretty 1.0 80 $ vcat $ map showDe
                                   text "let" <+>
                                   align (parens (vcat $ map (\(name, x) -> parens (nameDoc name <+> x)) bindings)) <$>
                                   indent 2 (vcat body)
-    alg (LetStar bindings body) = error "cannot prettyprint let*"
+    alg (LetStar _ _)           = error "cannot prettyprint let*"
     alg (And x y)               = parens $ text "and" <+> align (x <$> y)
     alg (Or x y)                = parens $ text "or" <+> align (x <$> y)
     alg (Not x)                 = parens $ text "not" <+> x
-    alg (Cond cases)            = error "cannot prettyprint cond"
+    alg (Cond _)                = error "cannot prettyprint cond"
     alg (If c t f)              = parens $ text "if" <+> align (c <$> t <$> f)
     alg (Cmp op x y)            = parens $ op' <+> align (x <$> y)
       where
@@ -124,13 +123,17 @@ showSchemeProg prog = T.pack $ displayS (renderPretty 1.0 80 $ vcat $ map showDe
     alg (Call f args)           = parens $ f <+> align (vsep args)
     alg (Debug x)               = parens $ text "debug" <+> x
     alg (Break)                 = parens $ text "break"
-    alg (TailCall name x)       = error "cannot prettyprint tail call"
+    alg (TailCall _ _)          = error "cannot prettyprint tail call"
     alg (Reference name)        = nameDoc name
     alg (Constant lit)          = case lit of
                                     LiteralInt n -> int n
                                     LiteralBool b -> text $ if b then "#t" else "#f"
                                     _ -> error "cannot prettyprint literal closure"
-    alg (Recur c t body)        = parens $ text "if-then-recur" <+> align (c <$> t <$> parens (hsep body))
+    alg (LetRec bindings body)  = parens $
+                                    text "letrec" <+>
+                                    align (parens (vcat $ map (\(name, x) -> parens (nameDoc name <+> x)) bindings)) <$>
+                                    indent 2 (vcat body)
+    alg (TailExit _)            = error "cannot prettyprint TailExit"
 
     nameDoc :: Symbol -> Doc
     nameDoc = text . T.unpack . getSymbol

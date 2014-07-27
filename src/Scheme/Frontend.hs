@@ -17,6 +17,7 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 import Data.Char
 import qualified Data.Foldable as F
 import Data.List
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Monoid
 import Data.Set (Set)
@@ -261,17 +262,65 @@ desugar prog =
         alg form         = Fix form
 
 optimize :: SchemeProg -> SchemeProg
-optimize = map (fmap (map optimizeExpr))
+optimize prog = map (fmap (map (optimizeExpr . inlineSingularBindings . optimizeExpr))) prog
   where
+    inlinableFunctions = -- M.empty
+      M.fromList $
+      map (defName &&& id) $
+      filter (\def -> defInlinable def || sum (map exprSize (defBody def)) <= 15) prog
+
     optimizeExpr :: Sexp -> Sexp
     optimizeExpr = cata alg
+      where
+        alg :: SexpF Sexp -> Sexp
+        alg (If (Fix (Not z)) x y) = Fix $ If z y x
+        alg (If (Fix (Constant (LiteralBool True))) x _)  = x
+        alg (If (Fix (Constant (LiteralBool False))) _ y) = y
+        alg (Begin [x])                                   = x
+        alg (Let [] xs)                                   = optimizeExpr $ Fix $ Begin xs
+        alg (Not (Fix (Not x)))                           = x
+        alg form@(Call (Fix (Reference name)) argVals)
+          | M.member name inlinableFunctions =
+            let (Define _ args body _ _) = inlinableFunctions M.! name
+            in
+            if length args /= length argVals
+            then error $ "function " ++ show (getSymbol name) ++
+                 " called with " ++ show (length argVals) ++
+                 " arguments, but expects " ++ show (length args) ++
+                 ": " ++ show form
+            else Fix $ Let (zip args argVals) body
+          | otherwise = Fix form
+        alg e                      = Fix e
 
-    alg :: SexpF Sexp -> Sexp
-    alg (If (Fix (Not z)) x y) = Fix $ If z y x
-    alg (Begin [x])            = x
-    alg (Let [] xs)            = optimizeExpr $ Fix $ Begin xs
-    alg (Not (Fix (Not x)))    = x
-    alg e                      = Fix e
+    inlineSingularBindings :: Sexp -> Sexp
+    inlineSingularBindings = cata alg
+      where
+        alg :: SexpF Sexp -> Sexp
+        alg (Let bindings body) =
+          case otherBindings of
+            [] -> Fix $ Begin $ inlinedBody
+            _  -> Fix $ Let otherBindings inlinedBody
+          where
+            refUses :: Map Symbol Int
+            refUses    = foldr (M.unionWith (+)) M.empty $ map collectRefUses body
+            singularRefs :: Set Symbol
+            singularRefs = S.fromList $ map fst $ filter ((== 1) . snd) $ M.toList refUses
+
+            (singleBindings, otherBindings) = partition (\(name, _) -> S.member name singularRefs)
+                                                        bindings
+            inlinedBody = foldr (\(name, initExpr) body' -> map (inline name initExpr) body')
+                                      body
+                                      singleBindings
+
+            inline :: Symbol -> Sexp -> Sexp -> Sexp
+            inline sym val = cata inlineAlg
+              where
+                inlineAlg :: SexpF Sexp -> Sexp
+                inlineAlg e@(Reference name)
+                  | name == sym = val
+                  | otherwise   = Fix e
+                inlineAlg e = Fix e
+        alg e = Fix e
 
 allUsedFunctions :: SchemeProg -> Set Symbol
 allUsedFunctions prog = go (S.singleton (Symbol "main"))
@@ -296,22 +345,40 @@ collectDefRefs (Define _ args body _ _) =
   (F.foldMap collectRefs body) `S.difference` S.fromList args
 
 collectRefs :: Sexp -> Set Symbol
-collectRefs = cata alg
+collectRefs = M.keysSet . collectRefUses
+
+newtype MonoidalMap k v = MonoidalMap { getMonoidalMap :: Map k v }
+                        deriving (Show, Eq, Ord)
+
+instance (Ord k, Monoid v) => Monoid (MonoidalMap k v) where
+  mempty = MonoidalMap mempty
+  mappend (MonoidalMap m1) (MonoidalMap m2) = MonoidalMap $ M.unionWith mappend m1 m2
+
+-- count how many times each reference is used in expression
+collectRefUses :: Sexp -> Map Symbol Int
+collectRefUses = M.map getSum . getMonoidalMap . cata alg
   where
-    alg :: SexpF (Set Symbol) -> Set Symbol
-    alg (Reference name)        = S.singleton name
-    alg (Lambda args body)      =
-      F.fold body `S.difference` S.fromList args
-    alg (Let bindings body)     =
-      (F.fold body <> F.foldMap snd bindings) `S.difference` boundNames
-      where
-        boundNames              = S.fromList $ map fst bindings
-    alg (LetRec bindings body)  =
-      (F.fold body <> F.foldMap snd bindings) `S.difference` boundNames
-      where
-        boundNames              = S.fromList $ map fst bindings
+    alg :: SexpF (MonoidalMap Symbol (Sum Int)) -> MonoidalMap Symbol (Sum Int)
+    alg (Reference name)        = MonoidalMap $ M.singleton name (Sum 1)
+    alg (Lambda args body)      = MonoidalMap $
+      getMonoidalMap (F.fold body) `M.difference` argMap args
+    alg (LetRec bindings body)  = MonoidalMap $
+      getMonoidalMap (F.fold body <> F.foldMap snd bindings) `M.difference`
+      argMap (map fst bindings)
+    alg (Let bindings body)     = MonoidalMap $
+      getMonoidalMap (F.fold body <> F.foldMap snd bindings) `M.difference`
+      argMap (map fst bindings)
     alg (LetStar _ _)           = error "collectRefs: let* not supported, should be desugared"
     alg e                       = F.fold e
+
+    argMap :: [Symbol] -> Map Symbol (Sum Int)
+    argMap args = M.fromList $ zip args (repeat mempty)
+
+exprSize :: Sexp -> Int
+exprSize = getSum . cata alg
+  where
+    alg :: SexpF (Sum Int) -> (Sum Int)
+    alg e = Sum 1 <> F.fold e
 
 constNil :: SexpF a
 constNil = Constant $ LiteralInt 0
