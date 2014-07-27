@@ -13,9 +13,9 @@
          (dy (- (cdr to) (cdr from))))
     (if (> (abs dy) (abs dx))
         ;; up or down
-        (if (> dx 0) +up+ +down+)
+        (if (> dy 0) +up+ +down+)
         ;; left or right
-        (if (> dy 0) +right+ +left+))))
+        (if (> dx 0) +right+ +left+))))
 
 (define (filter-wmap pred? wmap)
   (let* ((size (map-size wmap))
@@ -23,15 +23,18 @@
          (height (car size))
          (xs (seq 0 (- width 1)))
          (ys (seq 0 (- height 1))))
+
     (concat-map
      (lambda (rowix-row)
        (concat-map
         (lambda (colix-cell)
           (if (pred? (cdr colix-cell))
-              (list (cons (car colix-cell) (car rowix-row)))
+              (begin
+                (debug 1)
+                (list (cons (car colix-cell) (car rowix-row))))
               +nil+))
         (zip ys (cdr rowix-row))))
      (zip xs wmap))))
 
 (define (power-pills-positions wmap)
-  (filter-wmap (lambda (c) (power-pill? wmap c)) wmap))
+  (filter-wmap (lambda (c) (== +power-pill+ c)) wmap))

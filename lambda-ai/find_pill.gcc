@@ -1,0 +1,747 @@
+
+LDF  63        ; load fun @lbl_lam_11 ; <- (0) main: arg
+LD   0 0       ; let xs
+LDF  67        ; load fun @lbl_let_body_12 
+AP   1         ; to let body
+LDF  22        ; load fun @lbl_filter-wmap_3 
+AP   2         ; call
+LDF  52        ; load fun @lbl_step_9 
+CONS 
+RTN  
+
+LD   0 0       ; <- (9) lbl_append_1: let xs
+LDF  76        ; load fun @lbl_let_body_15 
+AP   1         ; to let body
+SEL  80 124    ; then @lbl_true_br_13 else @lbl_false_br_14 
+RTN  
+
+LD   0 1       ; <- (14) lbl_dir-to-target_2: let dx
+CAR  
+LD   0 0 
+CAR  
+SUB  
+LDF  182       ; load fun @lbl_let_body_27 
+AP   1         ; to let body
+RTN  
+
+LD   0 1       ; <- (22) lbl_filter-wmap_3: let wmap
+LDF  190       ; load fun @lbl_let_body_42 
+AP   1         ; to let body
+LDF  346       ; load fun @lbl_let_body_41 
+AP   1         ; to let body
+RTN  
+
+LD   0 2       ; <- (28) lbl_foldr_4: let xs
+LDF  368       ; load fun @lbl_let_body_69 
+AP   1         ; to let body
+SEL  372 420   ; then @lbl_true_br_67 else @lbl_false_br_68 
+RTN  
+
+DUM  1         ; <- (33) lbl_length_5: 
+LDF  450       ; load fun @lbl_lam_82 ; letrec iter
+LDF  455       ; load fun @lbl_letrec_body_81 
+RAP  1         ; to letrec body
+RTN  
+
+LD   0 1       ; <- (38) lbl_map_6: let xs
+LDF  466       ; load fun @lbl_let_body_90 
+AP   1         ; to let body
+SEL  470 518   ; then @lbl_true_br_88 else @lbl_false_br_89 
+RTN  
+
+LD   0 0       ; <- (43) lbl_nil?_7: condition
+ATOM 
+SEL  529 533   ; then @lbl_true_br_102 else @lbl_false_br_103 
+RTN  
+
+LD   0 0       ; <- (47) lbl_seq_8: condition
+LD   0 1 
+CGT  
+SEL  535 569   ; then @lbl_true_br_104 else @lbl_false_br_105 
+RTN  
+
+LD   0 1       ; <- (52) lbl_step_9: let xs
+LDF  578       ; load fun @lbl_let_body_113 
+AP   1         ; to let body
+LDF  589       ; load fun @lbl_let_body_112 
+AP   1         ; to let body
+RTN  
+
+LD   0 0       ; <- (58) lbl_zip_10: let xs
+LDF  607       ; load fun @lbl_let_body_118 
+AP   1         ; to let body
+SEL  611 613   ; then @lbl_true_br_116 else @lbl_false_br_117 
+RTN  
+
+LDC  3         ; <- (63) lbl_lam_11: 
+LD   0 0 
+CEQ  
+RTN  
+
+LD   0 0       ; <- (67) lbl_let_body_12: 
+CAR  
+RTN  
+
+LD   0 0       ; <- (70) lbl_true_br_16: 
+LDC  0 
+CEQ  
+JOIN 
+
+LDC  0         ; <- (74) lbl_false_br_17: 
+JOIN 
+
+LD   0 0       ; <- (76) lbl_let_body_15: condition
+ATOM 
+SEL  70 74     ; then @lbl_true_br_16 else @lbl_false_br_17 
+RTN  
+
+LD   0 1       ; <- (80) lbl_true_br_13: 
+JOIN 
+
+LD   0 0       ; <- (82) lbl_true_br_22: 
+LDC  0 
+CEQ  
+JOIN 
+
+LDC  0         ; <- (86) lbl_false_br_23: 
+JOIN 
+
+LD   0 0       ; <- (88) lbl_let_body_21: condition
+ATOM 
+SEL  82 86     ; then @lbl_true_br_22 else @lbl_false_br_23 
+RTN  
+
+LD   0 1       ; <- (92) lbl_true_br_19: 
+JOIN 
+
+LD   0 1       ; <- (94) lbl_true_br_25: 
+JOIN 
+
+LD   0 0       ; <- (96) lbl_false_br_26: 
+CAR  
+LD   0 0       ; arg
+CDR  
+LD   0 1       ; arg
+LDF  9         ; load fun @lbl_append_1 
+AP   2         ; call
+CONS 
+JOIN 
+
+LD   0 0       ; <- (105) lbl_let_body_24: arg
+LDF  43        ; load fun @lbl_nil?_7 
+AP   1         ; call
+SEL  94 96     ; then @lbl_true_br_25 else @lbl_false_br_26 
+RTN  
+
+LD   0 0       ; <- (110) lbl_false_br_20: 
+CAR  
+LD   0 0       ; let xs
+CDR  
+LD   0 1       ; let ys
+LDF  105       ; load fun @lbl_let_body_24 
+AP   2         ; to let body
+CONS 
+JOIN 
+
+LD   0 0       ; <- (119) lbl_let_body_18: let xs
+LDF  88        ; load fun @lbl_let_body_21 
+AP   1         ; to let body
+SEL  92 110    ; then @lbl_true_br_19 else @lbl_false_br_20 
+RTN  
+
+LD   0 0       ; <- (124) lbl_false_br_14: 
+CAR  
+LD   0 0       ; let xs
+CDR  
+LD   0 1       ; let ys
+LDF  119       ; load fun @lbl_let_body_18 
+AP   2         ; to let body
+CONS 
+JOIN 
+
+LD   0 0       ; <- (133) lbl_true_br_32: 
+JOIN 
+
+LDC  0         ; <- (135) lbl_false_br_33: 
+LD   0 0 
+SUB  
+JOIN 
+
+LD   0 0       ; <- (139) lbl_let_body_31: condition
+LDC  0 
+CGT  
+SEL  133 135   ; then @lbl_true_br_32 else @lbl_false_br_33 
+RTN  
+
+LD   0 0       ; <- (144) lbl_true_br_35: 
+JOIN 
+
+LDC  0         ; <- (146) lbl_false_br_36: 
+LD   0 0 
+SUB  
+JOIN 
+
+LD   0 0       ; <- (150) lbl_let_body_34: condition
+LDC  0 
+CGT  
+SEL  144 146   ; then @lbl_true_br_35 else @lbl_false_br_36 
+RTN  
+
+LDC  0         ; <- (155) lbl_true_br_37: 
+JOIN 
+
+LDC  2         ; <- (157) lbl_false_br_38: 
+JOIN 
+
+LD   0 0       ; <- (159) lbl_true_br_29: condition
+LDC  0 
+CGT  
+SEL  155 157   ; then @lbl_true_br_37 else @lbl_false_br_38 
+JOIN 
+
+LDC  1         ; <- (164) lbl_true_br_39: 
+JOIN 
+
+LDC  3         ; <- (166) lbl_false_br_40: 
+JOIN 
+
+LD   1 0       ; <- (168) lbl_false_br_30: condition
+LDC  0 
+CGT  
+SEL  164 166   ; then @lbl_true_br_39 else @lbl_false_br_40 
+JOIN 
+
+LD   0 0       ; <- (173) lbl_let_body_28: let x
+LDF  139       ; load fun @lbl_let_body_31 
+AP   1         ; to let body
+LD   1 0       ; let x
+LDF  150       ; load fun @lbl_let_body_34 
+AP   1         ; to let body
+CGT  
+SEL  159 168   ; then @lbl_true_br_29 else @lbl_false_br_30 
+RTN  
+
+LD   1 1       ; <- (182) lbl_let_body_27: let dy
+CDR  
+LD   1 0 
+CDR  
+SUB  
+LDF  173       ; load fun @lbl_let_body_28 
+AP   1         ; to let body
+RTN  
+
+LD   0 0       ; <- (190) lbl_let_body_42: arg
+LDF  33        ; load fun @lbl_length_5 
+AP   1         ; call
+LD   0 0       ; arg
+CAR  
+LDF  33        ; load fun @lbl_length_5 
+AP   1         ; call
+CONS 
+RTN  
+
+LDC  1         ; <- (199) lbl_true_br_49: traced value
+DBUG 
+LD   0 0 
+CAR  
+LD   1 0 
+CAR  
+CONS 
+LDC  0 
+CONS 
+JOIN 
+
+LDC  0         ; <- (209) lbl_false_br_50: 
+JOIN 
+
+LD   0 0       ; <- (211) lbl_lam_48: arg
+CDR  
+LD   3 0 
+AP   1         ; call
+SEL  199 209   ; then @lbl_true_br_49 else @lbl_false_br_50 
+RTN  
+
+LDC  0         ; <- (217) lbl_true_br_52: 
+JOIN 
+
+LDC  0         ; <- (219) lbl_true_br_55: 
+JOIN 
+
+LD   0 0       ; <- (221) lbl_false_br_56: 
+LD   0 0       ; arg
+LDC  1 
+ADD  
+LD   0 1       ; arg
+LDF  47        ; load fun @lbl_seq_8 
+AP   2         ; call
+CONS 
+JOIN 
+
+LD   0 0       ; <- (230) lbl_let_body_54: condition
+LD   0 1 
+CGT  
+SEL  219 221   ; then @lbl_true_br_55 else @lbl_false_br_56 
+RTN  
+
+LD   0 0       ; <- (235) lbl_false_br_53: 
+LD   0 0       ; let from
+LDC  1 
+ADD  
+LD   0 1       ; let to
+LDF  230       ; load fun @lbl_let_body_54 
+AP   2         ; to let body
+CONS 
+JOIN 
+
+LD   0 0       ; <- (244) lbl_let_body_51: condition
+LD   0 1 
+CGT  
+SEL  217 235   ; then @lbl_true_br_52 else @lbl_false_br_53 
+RTN  
+
+LDC  0         ; <- (249) lbl_true_br_57: 
+JOIN 
+
+LD   0 1       ; <- (251) lbl_false_br_58: arg
+CAR  
+LD   0 0 
+AP   1         ; call
+LD   0 0       ; arg
+LD   0 1       ; arg
+CDR  
+LDF  38        ; load fun @lbl_map_6 
+AP   2         ; call
+CONS 
+JOIN 
+
+LD   0 1       ; <- (262) lbl_let_body_47: arg
+LDF  43        ; load fun @lbl_nil?_7 
+AP   1         ; call
+SEL  249 251   ; then @lbl_true_br_57 else @lbl_false_br_58 
+RTN  
+
+LDF  9         ; load fun @lbl_append_1 ; <- (267) lbl_let_body_46: arg
+LDC  0         ; arg
+LD   0 0       ; arg
+LDF  28        ; load fun @lbl_foldr_4 
+AP   3         ; call
+RTN  
+
+LDF  211       ; load fun @lbl_lam_48 ; <- (273) lbl_lam_45: let f
+LDC  0         ; let from
+LD   1 0       ; let to
+CAR  
+LDC  1 
+SUB  
+LDF  244       ; load fun @lbl_let_body_51 
+AP   2         ; to let body
+LD   0 0       ; arg
+CDR  
+LDF  58        ; load fun @lbl_zip_10 
+AP   2         ; call
+LDF  262       ; load fun @lbl_let_body_47 
+AP   2         ; to let body
+LDF  267       ; load fun @lbl_let_body_46 
+AP   1         ; to let body
+RTN  
+
+LDC  0         ; <- (290) lbl_true_br_60: 
+JOIN 
+
+LDC  0         ; <- (292) lbl_true_br_63: 
+JOIN 
+
+LD   0 0       ; <- (294) lbl_false_br_64: 
+LD   0 0       ; arg
+LDC  1 
+ADD  
+LD   0 1       ; arg
+LDF  47        ; load fun @lbl_seq_8 
+AP   2         ; call
+CONS 
+JOIN 
+
+LD   0 0       ; <- (303) lbl_let_body_62: condition
+LD   0 1 
+CGT  
+SEL  292 294   ; then @lbl_true_br_63 else @lbl_false_br_64 
+RTN  
+
+LD   0 0       ; <- (308) lbl_false_br_61: 
+LD   0 0       ; let from
+LDC  1 
+ADD  
+LD   0 1       ; let to
+LDF  303       ; load fun @lbl_let_body_62 
+AP   2         ; to let body
+CONS 
+JOIN 
+
+LD   0 0       ; <- (317) lbl_let_body_59: condition
+LD   0 1 
+CGT  
+SEL  290 308   ; then @lbl_true_br_60 else @lbl_false_br_61 
+RTN  
+
+LDC  0         ; <- (322) lbl_true_br_65: 
+JOIN 
+
+LD   0 1       ; <- (324) lbl_false_br_66: arg
+CAR  
+LD   0 0 
+AP   1         ; call
+LD   0 0       ; arg
+LD   0 1       ; arg
+CDR  
+LDF  38        ; load fun @lbl_map_6 
+AP   2         ; call
+CONS 
+JOIN 
+
+LD   0 1       ; <- (335) lbl_let_body_44: arg
+LDF  43        ; load fun @lbl_nil?_7 
+AP   1         ; call
+SEL  322 324   ; then @lbl_true_br_65 else @lbl_false_br_66 
+RTN  
+
+LDF  9         ; load fun @lbl_append_1 ; <- (340) lbl_let_body_43: arg
+LDC  0         ; arg
+LD   0 0       ; arg
+LDF  28        ; load fun @lbl_foldr_4 
+AP   3         ; call
+RTN  
+
+LDF  273       ; load fun @lbl_lam_45 ; <- (346) lbl_let_body_41: let f
+LDC  0         ; let from
+LD   0 0       ; let to
+CDR  
+LDC  1 
+SUB  
+LDF  317       ; load fun @lbl_let_body_59 
+AP   2         ; to let body
+LD   1 1       ; arg
+LDF  58        ; load fun @lbl_zip_10 
+AP   2         ; call
+LDF  335       ; load fun @lbl_let_body_44 
+AP   2         ; to let body
+LDF  340       ; load fun @lbl_let_body_43 
+AP   1         ; to let body
+RTN  
+
+LD   0 0       ; <- (362) lbl_true_br_70: 
+LDC  0 
+CEQ  
+JOIN 
+
+LDC  0         ; <- (366) lbl_false_br_71: 
+JOIN 
+
+LD   0 0       ; <- (368) lbl_let_body_69: condition
+ATOM 
+SEL  362 366   ; then @lbl_true_br_70 else @lbl_false_br_71 
+RTN  
+
+LD   0 1       ; <- (372) lbl_true_br_67: 
+JOIN 
+
+LD   0 0       ; <- (374) lbl_true_br_76: 
+LDC  0 
+CEQ  
+JOIN 
+
+LDC  0         ; <- (378) lbl_false_br_77: 
+JOIN 
+
+LD   0 0       ; <- (380) lbl_let_body_75: condition
+ATOM 
+SEL  374 378   ; then @lbl_true_br_76 else @lbl_false_br_77 
+RTN  
+
+LD   0 1       ; <- (384) lbl_true_br_73: 
+JOIN 
+
+LD   0 1       ; <- (386) lbl_true_br_79: 
+JOIN 
+
+LD   0 2       ; <- (388) lbl_false_br_80: arg
+CAR  
+LD   0 0       ; arg
+LD   0 1       ; arg
+LD   0 2       ; arg
+CDR  
+LDF  28        ; load fun @lbl_foldr_4 
+AP   3         ; call
+LD   0 0 
+AP   2         ; call
+JOIN 
+
+LD   0 2       ; <- (399) lbl_let_body_78: arg
+LDF  43        ; load fun @lbl_nil?_7 
+AP   1         ; call
+SEL  386 388   ; then @lbl_true_br_79 else @lbl_false_br_80 
+RTN  
+
+LD   0 2       ; <- (404) lbl_false_br_74: arg
+CAR  
+LD   0 0       ; let f
+LD   0 1       ; let acc
+LD   0 2       ; let xs
+CDR  
+LDF  399       ; load fun @lbl_let_body_78 
+AP   3         ; to let body
+LD   0 0 
+AP   2         ; call
+JOIN 
+
+LD   0 2       ; <- (415) lbl_let_body_72: let xs
+LDF  380       ; load fun @lbl_let_body_75 
+AP   1         ; to let body
+SEL  384 404   ; then @lbl_true_br_73 else @lbl_false_br_74 
+RTN  
+
+LD   0 2       ; <- (420) lbl_false_br_68: arg
+CAR  
+LD   0 0       ; let f
+LD   0 1       ; let acc
+LD   0 2       ; let xs
+CDR  
+LDF  415       ; load fun @lbl_let_body_72 
+AP   3         ; to let body
+LD   0 0 
+AP   2         ; call
+JOIN 
+
+LD   0 0       ; <- (431) lbl_true_br_86: 
+LDC  0 
+CEQ  
+JOIN 
+
+LDC  0         ; <- (435) lbl_false_br_87: 
+JOIN 
+
+LD   0 0       ; <- (437) lbl_let_body_85: condition
+ATOM 
+SEL  431 435   ; then @lbl_true_br_86 else @lbl_false_br_87 
+RTN  
+
+LD   0 1       ; <- (441) lbl_true_br_83: 
+RTN  
+
+LD   0 0       ; <- (443) lbl_false_br_84: 
+CDR  
+LD   0 1 
+LDC  1 
+ADD  
+LD   1 0 
+TAP  2         ; jump
+
+LD   0 0       ; <- (450) lbl_lam_82: let xs
+LDF  437       ; load fun @lbl_let_body_85 
+AP   1         ; to let body
+TSEL 441 443   ; then @lbl_true_br_83 else @lbl_false_br_84 
+RTN  
+
+LD   1 0       ; <- (455) lbl_letrec_body_81: arg
+LDC  0         ; arg
+LD   0 0 
+AP   2         ; call
+RTN  
+
+LD   0 0       ; <- (460) lbl_true_br_91: 
+LDC  0 
+CEQ  
+JOIN 
+
+LDC  0         ; <- (464) lbl_false_br_92: 
+JOIN 
+
+LD   0 0       ; <- (466) lbl_let_body_90: condition
+ATOM 
+SEL  460 464   ; then @lbl_true_br_91 else @lbl_false_br_92 
+RTN  
+
+LDC  0         ; <- (470) lbl_true_br_88: 
+JOIN 
+
+LD   0 0       ; <- (472) lbl_true_br_97: 
+LDC  0 
+CEQ  
+JOIN 
+
+LDC  0         ; <- (476) lbl_false_br_98: 
+JOIN 
+
+LD   0 0       ; <- (478) lbl_let_body_96: condition
+ATOM 
+SEL  472 476   ; then @lbl_true_br_97 else @lbl_false_br_98 
+RTN  
+
+LDC  0         ; <- (482) lbl_true_br_94: 
+JOIN 
+
+LDC  0         ; <- (484) lbl_true_br_100: 
+JOIN 
+
+LD   0 1       ; <- (486) lbl_false_br_101: arg
+CAR  
+LD   0 0 
+AP   1         ; call
+LD   0 0       ; arg
+LD   0 1       ; arg
+CDR  
+LDF  38        ; load fun @lbl_map_6 
+AP   2         ; call
+CONS 
+JOIN 
+
+LD   0 1       ; <- (497) lbl_let_body_99: arg
+LDF  43        ; load fun @lbl_nil?_7 
+AP   1         ; call
+SEL  484 486   ; then @lbl_true_br_100 else @lbl_false_br_101 
+RTN  
+
+LD   0 1       ; <- (502) lbl_false_br_95: arg
+CAR  
+LD   0 0 
+AP   1         ; call
+LD   0 0       ; let f
+LD   0 1       ; let xs
+CDR  
+LDF  497       ; load fun @lbl_let_body_99 
+AP   2         ; to let body
+CONS 
+JOIN 
+
+LD   0 1       ; <- (513) lbl_let_body_93: let xs
+LDF  478       ; load fun @lbl_let_body_96 
+AP   1         ; to let body
+SEL  482 502   ; then @lbl_true_br_94 else @lbl_false_br_95 
+RTN  
+
+LD   0 1       ; <- (518) lbl_false_br_89: arg
+CAR  
+LD   0 0 
+AP   1         ; call
+LD   0 0       ; let f
+LD   0 1       ; let xs
+CDR  
+LDF  513       ; load fun @lbl_let_body_93 
+AP   2         ; to let body
+CONS 
+JOIN 
+
+LD   0 0       ; <- (529) lbl_true_br_102: 
+LDC  0 
+CEQ  
+JOIN 
+
+LDC  0         ; <- (533) lbl_false_br_103: 
+JOIN 
+
+LDC  0         ; <- (535) lbl_true_br_104: 
+JOIN 
+
+LDC  0         ; <- (537) lbl_true_br_107: 
+JOIN 
+
+LDC  0         ; <- (539) lbl_true_br_110: 
+JOIN 
+
+LD   0 0       ; <- (541) lbl_false_br_111: 
+LD   0 0       ; arg
+LDC  1 
+ADD  
+LD   0 1       ; arg
+LDF  47        ; load fun @lbl_seq_8 
+AP   2         ; call
+CONS 
+JOIN 
+
+LD   0 0       ; <- (550) lbl_let_body_109: condition
+LD   0 1 
+CGT  
+SEL  539 541   ; then @lbl_true_br_110 else @lbl_false_br_111 
+RTN  
+
+LD   0 0       ; <- (555) lbl_false_br_108: 
+LD   0 0       ; let from
+LDC  1 
+ADD  
+LD   0 1       ; let to
+LDF  550       ; load fun @lbl_let_body_109 
+AP   2         ; to let body
+CONS 
+JOIN 
+
+LD   0 0       ; <- (564) lbl_let_body_106: condition
+LD   0 1 
+CGT  
+SEL  537 555   ; then @lbl_true_br_107 else @lbl_false_br_108 
+RTN  
+
+LD   0 0       ; <- (569) lbl_false_br_105: 
+LD   0 0       ; let from
+LDC  1 
+ADD  
+LD   0 1       ; let to
+LDF  564       ; load fun @lbl_let_body_106 
+AP   2         ; to let body
+CONS 
+JOIN 
+
+LD   0 0       ; <- (578) lbl_let_body_113: 
+CAR  
+RTN  
+
+LD   0 0       ; <- (581) lbl_let_body_115: 
+CDR  
+CAR  
+RTN  
+
+LD   0 0       ; <- (585) lbl_let_body_114: 
+CDR  
+CAR  
+RTN  
+
+LD   1 0       ; <- (589) lbl_let_body_112: 
+LD   1 1       ; let xs
+LDF  581       ; load fun @lbl_let_body_115 
+AP   1         ; to let body
+LDF  585       ; load fun @lbl_let_body_114 
+AP   1         ; to let body
+LD   1 0       ; arg
+CAR  
+LDF  14        ; load fun @lbl_dir-to-target_2 
+AP   2         ; call
+CONS 
+RTN  
+
+LD   0 0       ; <- (601) lbl_true_br_119: 
+LDC  0 
+CEQ  
+JOIN 
+
+LDC  0         ; <- (605) lbl_false_br_120: 
+JOIN 
+
+LD   0 0       ; <- (607) lbl_let_body_118: condition
+ATOM 
+SEL  601 605   ; then @lbl_true_br_119 else @lbl_false_br_120 
+RTN  
+
+LDC  0         ; <- (611) lbl_true_br_116: 
+JOIN 
+
+LD   0 0       ; <- (613) lbl_false_br_117: 
+CAR  
+LD   0 1 
+CAR  
+CONS 
+LD   0 0       ; arg
+CDR  
+LD   0 1       ; arg
+CDR  
+LDF  58        ; load fun @lbl_zip_10 
+AP   2         ; call
+CONS 
+JOIN 

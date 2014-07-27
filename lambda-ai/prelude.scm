@@ -76,12 +76,12 @@
 
 (define (zip xs ys)
   (if (nil? xs)
-      0
+      +nil+
       (cons (cons (car xs) (car ys))
             (zip (cdr xs) (cdr ys)))))
 
 (define (concat xs)
-  (foldr append 0 xs))
+  (foldr append +nil+ xs))
 
 (define (append xs ys)
   (if (nil? xs)
@@ -91,11 +91,10 @@
 (define (concat-map f xs)
   (concat (map f xs)))
 
-
 (define (seq from to)
-  (if (not (> from to))
-      (cons from (seq (+ from 1) to))
-      +nil+))
+  (if (> from to)
+      +nil+
+      (cons from (seq (+ from 1) to))))
 
 ;; Debug helpers
 
