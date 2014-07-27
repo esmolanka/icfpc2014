@@ -4,9 +4,9 @@
 (define (third xs)   (car (cdr (cdr xs))))
 (define (fourth xs)  (car (cdr (cdr (cdr xs)))))
 (define (fifth xs)   (car (cdr (cdr (cdr (cdr xs))))))
-(define (sixth xs)   (car (cdr (cdr (cdr (cdr (cdr xs))))))
-(define (seventh xs) (car (cdr (cdr (cdr (cdr (cdr (cdr xs))))))
-(define (eights xs)  (car (cdr (cdr (cdr (cdr (cdr (cdr (cdr xs))))))
+(define (sixth xs)   (car (cdr (cdr (cdr (cdr (cdr xs)))))))
+(define (seventh xs) (car (cdr (cdr (cdr (cdr (cdr (cdr xs))))))))
+(define (eighth xs)  (car (cdr (cdr (cdr (cdr (cdr (cdr (cdr xs)))))))))
 
 ;; unsafe when index is out of bounds
 (define (nth i xs)
