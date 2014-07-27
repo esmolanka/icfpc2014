@@ -158,9 +158,25 @@ predator searchPeriod getOutPeriod = do
                 dy =: ly
                 dx `absDiff` px
                 dy `absDiff` py
-                ifte (dx <: dy)
-                  (checkYFirst (px,py) (lx,ly) vitalityVar)
-                  (checkXFirst (px,py) (lx,ly) vitalityVar)
+
+                ifte (px <: lx)
+                  goRight'
+                  goLeft'
+
+                withVar 0 $ \checkY -> do
+                  if' (dy >: dx) $ inc checkY
+                  if' (dx =:= 0) $ inc checkY
+                  if' (checkY >: 0) $
+                    ifte (py <: ly)
+                      goDown'
+                      goUp'
+
+        isFrightMode = vitalityVar =:= 1
+        goDown'  = ifte isFrightMode goUp    goDown
+        goUp'    = ifte isFrightMode goDown  goUp
+        goLeft'  = ifte isFrightMode goRight goLeft
+        goRight' = ifte isFrightMode goLeft  goRight
+
 
 checkXFirst :: (Var,Var) -> (Var,Var) -> Var -> GHCM ()
 checkXFirst (px,py) (lx,ly) vitality = do
