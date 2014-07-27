@@ -43,12 +43,12 @@
 
 (define (map f xs)
   (if (nil? xs)
-      0
+      +nil+
       (cons (f (car xs)) (map f (cdr xs)))))
 
 (define (filter pred xs)
   (if (nil? xs)
-      0
+      +nil+
       (if (pred (car xs))
           (cons (car xs) (filter pred (cdr xs)))
           (filter pred (cdr xs)))))
@@ -66,14 +66,38 @@
                        (tailcall iter (cdr xs) (+ n 1))))))
     (iter xs 0)))
 
+(define (abs x)
+  (if (> x 0)
+      x (- 0 x)))
+
+(define (zip xs ys)
+  (if (nil? xs)
+      0
+      (cons (cons (car xs) (car ys))
+            (zip (cdr xs) (cdr ys)))))
+
+(define (concat xs)
+  (foldr append 0 xs))
+
+(define (append xs ys)
+  (if (nil? xs)
+      ys
+      (cons (car xs) (append (cdr xs) ys))))
+
+(define (concat-map f xs)
+  (concat (map f xs)))
+
+
+(define (seq from to)
+  (if (not (> from to))
+      (cons from (seq (+ from 1) to))
+      +nil+))
+
 ;; Debug helpers
 
 (define (debug-it x)
   (debug x)
   x)
-
-
-
 
 ;; Game helpers
 
@@ -144,6 +168,7 @@
 (define (non-blocked? wmap rowcol)
   (not (== +wall+ (map-cell wmap rowcol))))
 
+;; height x width
 (define (map-size wmap)
   (cons
    (length wmap)
