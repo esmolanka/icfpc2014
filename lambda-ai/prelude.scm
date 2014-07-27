@@ -17,7 +17,22 @@
 (define (mod x y) (- x (* y (div x y))))
 
 (define (manhattan-distance x y)
-  (+ x y))
+  (+ (abs (- (car x) (car y)))
+     (abs (- (cdr x) (cdr y)))))
+
+(define (minimum-by f xs)
+  (letrec ((go (lambda (xs min)
+                  (if (nil? xs)
+                      min
+                      (let ((new-min (f (car xs))))
+                        (tailcall go
+                                  (cdr xs)
+                                  (if (> min new-min)
+                                      new-min
+                                      min)))))))
+    (if (nil? xs)
+        +nil+
+        (go (cdr xs) (f (car xs))))))
 
 (define (member-by eq-pred x xs)
   (cond ((nil? xs)
