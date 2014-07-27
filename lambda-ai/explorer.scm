@@ -1,22 +1,22 @@
 (define (main world undocumented)
   (cons 0 step))
 
-(define (get-up rowcol)
-  (cons (- (car rowcol) 1) (cdr rowcol)))
+(define (get-up xy)
+  (cons (car xy) (- (cdr xy) 1)))
 
-(define (get-down rowcol)
-  (cons (+ (car rowcol) 1) (cdr rowcol)))
+(define (get-down xy)
+  (cons (car xy) (+ (cdr xy) 1)))
 
-(define (get-left rowcol)
-  (cons (car rowcol) (- (cdr rowcol) 1)))
+(define (get-left xy)
+  (cons (- (car xy) 1) (cdr xy)))
 
-(define (get-right rowcol)
-  (cons (car rowcol) (+ (cdr rowcol) 1)))
+(define (get-right xy)
+  (cons (+ (car xy) 1) (cdr xy)))
 
 (define (step state world)
   (let* ((wmap (world-map world))
          (lman (lm-status world))
-         (loc (swap (lm-location lman)))
+         (loc (lm-location lman))
          (up (get-up loc))
          (down (get-down loc))
          (left (get-left loc))
