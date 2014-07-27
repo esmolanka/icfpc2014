@@ -150,6 +150,9 @@ standaloneBlock ref gen =
         isValidEnding (Instr JOIN)     = True
         isValidEnding _                = False
 
+annotate :: String -> GenM e ()
+annotate = tell . (, mempty) . (:[]) . Annotate
+
 initEnv :: ()
 initEnv = ()
 

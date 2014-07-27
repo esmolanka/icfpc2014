@@ -11,7 +11,7 @@ type Label = String
 
 data AnnotatedAddr = AnnotatedAddr
     { aAddr :: Addr
-    , aLabel :: Maybe Label
+    , aRefLabel :: Maybe Label
     } deriving (Show, Eq, Ord)
 
 data Ref =
@@ -21,13 +21,15 @@ data Ref =
 
 data Statement = SetLabel Label
                | Instr (Instruction Ref)
+               | Annotate String
                  deriving (Show, Eq, Ord)
 
 newtype Program = Program [Statement] deriving (Show, Eq, Ord)
 
 data AnnotatedInstruction = AnnotatedInstruction
     { aInstr :: Instruction AnnotatedAddr
-    , aAnnotation :: Maybe String
+    , aLabel :: Maybe (Addr, Label)
+    , aComment :: Maybe String
     } deriving (Show, Eq, Ord)
 
 newtype FlatProgram = FlatProgram [AnnotatedInstruction] deriving (Show, Eq, Ord)

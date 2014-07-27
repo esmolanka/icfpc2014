@@ -21,7 +21,7 @@ ppAddr :: AnnotatedAddr -> Doc
 ppAddr (aAddr -> (Addr n)) = pretty n
 
 ppLabel :: AnnotatedAddr -> Doc
-ppLabel (aLabel -> str) = maybe "#" (("@"<>) . text) str
+ppLabel (aRefLabel -> str) = maybe "#" (("@"<>) . text) str
 
 ppComment :: Doc -> Doc
 ppComment txt = toCol 15 (semi <+> txt)
@@ -30,8 +30,9 @@ toCol :: Int -> Doc -> Doc
 toCol n t = column (\c -> if c < n then text (replicate (n-c) ' ') <> t else t)
 
 ppAnnotatedInstr :: AnnotatedInstruction -> Doc
-ppAnnotatedInstr (AnnotatedInstruction i (Just ann)) = vcat [ semi <+> text ann <> colon, indent 2 $ ppInstr i ]
-ppAnnotatedInstr (AnnotatedInstruction i Nothing) = indent 2 $ ppInstr i
+ppAnnotatedInstr (AnnotatedInstruction i mlbl mcomment) =
+    vcat $ maybe [] (\(Addr addr, lbl) -> [ semi <+> parens (pretty addr) <+> text lbl <> colon ]) mlbl
+         ++ [ hcat ([ indent 4 (ppInstr i) ] ++ maybe [] (\msg -> [ ppComment (text msg) ]) mcomment) ]
 
 ppInstr :: Instruction AnnotatedAddr -> Doc
 ppInstr (LDC c)   = instr "LDC"  <+> int c
@@ -48,7 +49,7 @@ ppInstr ATOM      = instr "ATOM"
 ppInstr CONS      = instr "CONS"
 ppInstr CAR       = instr "CAR"
 ppInstr CDR       = instr "CDR"
-ppInstr (SEL t f) = instr "SEL"  <+> ppAddr t <+> ppAddr f <+> ppComment ("branch to" <+> ppLabel t <+> "otherwise" <+> ppLabel f)
+ppInstr (SEL t f) = instr "SEL"  <+> ppAddr t <+> ppAddr f <+> ppComment ("then" <+> ppLabel t <+> "else" <+> ppLabel f)
 ppInstr JOIN      = instr "JOIN"
 ppInstr (LDF f)   = instr "LDF"  <+> ppAddr f <+> ppComment ("load fun" <+> ppLabel f)
 ppInstr (AP n)    = instr "AP"   <+> int n
@@ -56,12 +57,13 @@ ppInstr RTN       = instr "RTN"
 ppInstr (DUM n)   = instr "DUM"  <+> int n
 ppInstr (RAP n)   = instr "RAP"  <+> int n
 ppInstr STOP      = instr "STOP"
-ppInstr (TSEL t f)= instr "TSEL" <+> ppAddr t <+> ppAddr f <+> ppComment ("... then" <+> ppLabel t <+> "else" <+> ppLabel f)
+ppInstr (TSEL t f)= instr "TSEL" <+> ppAddr t <+> ppAddr f <+> ppComment ("then" <+> ppLabel t <+> "else" <+> ppLabel f)
 ppInstr (TAP n)   = instr "TAP"  <+> int n
 ppInstr (TRAP n)  = instr "TRAP" <+> int n
 ppInstr DBUG      = instr "DBUG"
 ppInstr BRK       = instr "BRK"
 
+{-
 _test :: FlatProgram
 _test = FlatProgram
    [ AnnotatedInstruction (SEL (AnnotatedAddr (Addr 1) Nothing) (AnnotatedAddr (Addr 1000) Nothing)) Nothing
@@ -69,4 +71,4 @@ _test = FlatProgram
    , AnnotatedInstruction (ADD) Nothing
    , AnnotatedInstruction (LDF (AnnotatedAddr (Addr 10) (Just "foo"))) Nothing
    ]
-
+-}

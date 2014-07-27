@@ -192,10 +192,10 @@ compileExpr = para alg
       --  2))
       -- TODO: move it into desugaring phase
       label <- mkNamedLabel "let_body"
-      mapM_ (\(_var, (initExpr, _)) -> initExpr) bindings
+      mapM_ (\(var, (initExpr, _)) -> annotate ("let " ++ (T.unpack $ getSymbol var)) >> initExpr) bindings
       -- make closure and call it
       ldf label
-      ap (length bindings)
+      annotate "to let body" >> ap (length bindings)
       withFrameForArgs (map fst bindings) $
         standaloneBlock label $ do
          mapM_ fst body
@@ -204,7 +204,7 @@ compileExpr = para alg
     alg (If (c, _) (t, _) (f, _)) = do
       trueLabel <- mkNamedLabel "true_br"
       falseLabel <- mkNamedLabel "false_br"
-      c
+      annotate "condition" >> c
       sel trueLabel falseLabel
       standaloneBlock trueLabel (t >> join)
       standaloneBlock falseLabel (f >> join)
@@ -228,7 +228,7 @@ compileExpr = para alg
       functionLabel name >>= ldf
 
     alg form@(Call (x, xExpr) args) = do
-      mapM_ fst args
+      mapM_ (\(a,_) -> annotate "arg" >> a) args
       case xExpr of
         Fix (Reference name) -> do
           argcount <- functionArgumentCount name
@@ -245,6 +245,7 @@ compileExpr = para alg
                throwError $ "Lambda expects " ++ show argcount ++
                               " arguments: \n" ++ show (fmap snd form)
         _ -> x -- x must add closure cell on the stack
+      annotate "call"
       ap $ length args
 
     alg form@(Recur (cond,_) (true,_) args) = do
@@ -254,16 +255,16 @@ compileExpr = para alg
                       " arguments: \n" ++ show (fmap snd form)
       trivLabel <- mkNamedLabel "triv_br"
       recurLabel <- mkNamedLabel "recur_br"
-      cond
+      annotate "if-then-recur condition" >> cond
       tsel trivLabel recurLabel
       standaloneBlock trivLabel (true >> rtn)
       standaloneBlock recurLabel $ do
         mapM_ fst args
         ldf label
-        tap (length args)
+        annotate "jump" >> tap (length args)
 
     alg (Debug (x, _)) =
-      x >> dbug
+      annotate "traced value" >> x >> dbug
 
     alg (Break) = brk
 
@@ -280,7 +281,7 @@ compileExpr = para alg
             functionLabel name >>= ldf
           | constant ->
             resolveConstant name >>= compileExpr
-          | otherwise -> error $ "unresolved reference: " ++ show (getSymbol name)
+          | otherwise -> throwError $ "unresolved reference: " ++ show (getSymbol name)
 
     alg (Constant (LiteralInt n)) = do
       ldc n
