@@ -56,7 +56,7 @@ follower0 :: GHCM ()
 follower0 = do
   withLambdaManPosition 1 $ \lx ly -> do
     withMyPosition $ \px py -> do
-      checkXFirst (px,py) (lx,ly)
+      checkXFirst (px,py) (lx,ly) 0
 
 -- Always move in the direction of the lambda man (first one)
 -- Check X coordinate first if current direction is 0|1
@@ -68,11 +68,18 @@ follower1 = do
       withGhostPosition Current idx $ \px py -> do
         withDirectionAndVitality idx $ \_vit dir ->
           ifte (dir <: 2)
-            (checkYFirst (px,py) (lx,ly))
-            (checkXFirst (px,py) (lx,ly))
+            (checkYFirst (px,py) (lx,ly) 0)
+            (checkXFirst (px,py) (lx,ly) 0)
 
 predator :: Int -> Int -> GHCM ()
 predator searchPeriod getOutPeriod = do
+  updateVitality
+
+  -- In case of "fright mode" switch
+  -- to search mode.
+  if' (vitalityVar =:= 1) $
+    modeVar =: 0
+
   ifte (modeVar =:= 0)
     searchMode
     getOutMode
@@ -84,6 +91,12 @@ predator searchPeriod getOutPeriod = do
     xVar    = mem 3
     yVar    = mem 4
     modeVar = mem 5
+    vitalityVar = mem 6
+
+    updateVitality =
+      withMyIndex $ \idx ->
+        withDirectionAndVitality idx $ \vit _dir ->
+          vitalityVar =: vit
 
     switchMode = do
       inc modeVar
@@ -146,28 +159,41 @@ predator searchPeriod getOutPeriod = do
                 dx `absDiff` px
                 dy `absDiff` py
                 ifte (dx <: dy)
-                  (checkYFirst (px,py) (lx,ly))
-                  (checkXFirst (px,py) (lx,ly))
+                  (checkYFirst (px,py) (lx,ly) vitalityVar)
+                  (checkXFirst (px,py) (lx,ly) vitalityVar)
 
-checkXFirst :: (Var,Var) -> (Var,Var) -> GHCM ()
-checkXFirst (px,py) (lx,ly) = do
+checkXFirst :: (Var,Var) -> (Var,Var) -> Var -> GHCM ()
+checkXFirst (px,py) (lx,ly) vitality = do
   ifte (px <: lx)
-    goRight $
+    goRight' $
     ifte (px >: lx)
-       goLeft $
+       goLeft' $
        ifte (py <: ly)
-          goDown
-          goUp
+          goDown'
+          goUp'
+  where
+    isFrightMode = vitality =:= 1
+    goDown'  = ifte isFrightMode goUp    goDown
+    goUp'    = ifte isFrightMode goDown  goUp
+    goLeft'  = ifte isFrightMode goRight goLeft
+    goRight' = ifte isFrightMode goLeft  goRight
 
-checkYFirst :: (Var,Var) -> (Var,Var) -> GHCM ()
-checkYFirst (px,py) (lx,ly) = do
+checkYFirst :: (Var,Var) -> (Var,Var) -> Var -> GHCM ()
+checkYFirst (px,py) (lx,ly) vitality = do
   ifte (py <: ly)
-    goDown $
+    goDown' $
     ifte (py >: ly)
-       goUp $
+       goUp' $
        ifte (px <: lx)
-          goRight
-          goLeft
+          goRight'
+          goLeft'
+  where
+    isFrightMode = vitality =:= 1
+    goDown'  = ifte isFrightMode goUp    goDown
+    goUp'    = ifte isFrightMode goDown  goUp
+    goLeft'  = ifte isFrightMode goRight goLeft
+    goRight' = ifte isFrightMode goLeft  goRight
+
 
 -- Bots from the reference
 
