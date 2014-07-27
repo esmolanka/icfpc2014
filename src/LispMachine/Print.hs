@@ -5,6 +5,7 @@ module LispMachine.Print
     ) where
 
 import Text.PrettyPrint.ANSI.Leijen
+import Data.Maybe
 
 import LispMachine.Instructions
 
@@ -31,8 +32,13 @@ toCol n t = column (\c -> if c < n then text (replicate (n-c) ' ') <> t else t)
 
 ppAnnotatedInstr :: AnnotatedInstruction -> Doc
 ppAnnotatedInstr (AnnotatedInstruction i mlbl mcomment) =
-    vcat $ maybe [] (\(Addr addr, lbl) -> [ semi <+> parens (pretty addr) <+> text lbl <> colon ]) mlbl
-         ++ [ hcat ([ indent 4 (ppInstr i) ] ++ maybe [] (\msg -> [ ppComment (text msg) ]) mcomment) ]
+    let showLbl (Addr addr, lbl) = "<-" <+> parens (pretty addr) <+> text lbl
+        comment = (maybe (text "" <>) (\l -> ((showLbl l <> colon) <+>)) mlbl)
+                  (maybe (text "") text mcomment)
+    in
+    vcat $ concat [ if isJust mlbl then [ text "" ] else []
+                  , [ indent 4 (ppInstr i) <+> if (isJust mlbl || isJust mcomment) then ppComment comment else empty ]
+                  ]
 
 ppInstr :: Instruction AnnotatedAddr -> Doc
 ppInstr (LDC c)   = instr "LDC"  <+> int c
