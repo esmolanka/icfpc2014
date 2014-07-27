@@ -204,37 +204,43 @@ compileExpr = para alg
          mapM_ fst body
          rtn
 
-
     alg (LetRec bindings body) = do
-      -- handle let as usual in scheme:
-      -- (let ((foo 1)
-      --       (bar 2))
-      --   (body foo bar))
-      -- =>
-      -- ((lambda (foo bar)
-      --     (body foo bar))
-      --  1
-      --  2))
-      -- TODO: move it into desugaring phase
-      label <- mkNamedLabel "let_body"
+      label <- mkNamedLabel "letrec_body"
       withFrameForArgs (map fst bindings) $ do
         dum (length bindings)
-        mapM_ (\(var, (initExpr, _)) -> annotate ("let " ++ (T.unpack $ getSymbol var)) >> initExpr) bindings
+        mapM_ (\(var, (initExpr, _)) -> annotate ("letrec " ++ (T.unpack $ getSymbol var)) >> initExpr) bindings
         -- make closure and call it
         ldf label
-        annotate "to let body" >> rap (length bindings)
-        --withFrameForArgs [] $
+        annotate "to letrec body" >> rap (length bindings)
         standaloneBlock label $ do
           mapM_ fst body
           rtn
 
-    alg (If (c, _) (t, _) (f, _)) = do
+    alg (If (c, _) (t, tExp) (f, fExp)) = do
       trueLabel <- mkNamedLabel "true_br"
       falseLabel <- mkNamedLabel "false_br"
       annotate "condition" >> c
-      sel trueLabel falseLabel
-      standaloneBlock trueLabel (t >> join)
-      standaloneBlock falseLabel (f >> join)
+      case (isTailOp tExp, isTailOp fExp) of
+        (True, True) -> do
+          tsel trueLabel falseLabel
+          standaloneBlock trueLabel  t
+          standaloneBlock falseLabel f
+        (False, True) -> do
+          tsel trueLabel falseLabel
+          standaloneBlock trueLabel  (t >> rtn)
+          standaloneBlock falseLabel f
+        (True, False) -> do
+          tsel trueLabel falseLabel
+          standaloneBlock trueLabel  t
+          standaloneBlock falseLabel (f >> rtn)
+        (False, False) -> do
+          sel trueLabel falseLabel
+          standaloneBlock trueLabel  (t >> join)
+          standaloneBlock falseLabel (f >> join)
+      where
+        isTailOp (Fix (TailCall _ _)) = True
+        isTailOp (Fix (TailExit _))   = True
+        isTailOp _ = False
 
     alg (Cmp op (x, _) (y, _)) =
         x >> y >> case op of
@@ -275,23 +281,15 @@ compileExpr = para alg
       annotate "call"
       ap $ length args
 
-    alg form@(Recur (cond,_) (true,_) (clos':args)) = do
-      (name, argcount, _) <- asks (head . getCalls . callEnv)
-      when (length args /= argcount) $
-           throwError $ "While recuring, function " ++ show (getSymbol name) ++ " expects " ++ show argcount ++
-                      " arguments: \n" ++ show (fmap snd form)
-      trivLabel <- mkNamedLabel "triv_br"
-      recurLabel <- mkNamedLabel "recur_br"
-      annotate "if-then-recur condition" >> cond
-      tsel trivLabel recurLabel
-      standaloneBlock trivLabel (true >> rtn)
-      standaloneBlock recurLabel $ do
-        mapM_ fst args
-        (n,i) <- case snd clos' of
-                   (Fix (Reference clos)) -> resolveVar clos
-                   _ -> throwError "if-then-recur: first argument of continuation must be symbol"
-        ld n i
-        annotate "jump" >> tap (length args)
+    alg (TailCall clos args) = do
+      mapM_ fst args
+      (n,i) <- resolveVar clos
+      ld n i
+      annotate "jump" >> tap (length args)
+
+    alg (TailExit res) = do
+      fst res
+      rtn
 
     alg (Debug (x, _)) =
       annotate "traced value" >> x >> dbug
@@ -319,7 +317,6 @@ compileExpr = para alg
     alg (Constant (LiteralBool b)) = do
       ldc $ if b then 1 else 0
 
-    alg form@(TailCall _ _)                = throwError $ show (fmap snd form) ++ " form not supported yet"
     alg form@(Constant (LiteralClosure _)) = throwError $ show (fmap snd form) ++ " form not supported yet"
 
     alg form@(And _ _)                     = throwError $ show (fmap snd form) ++ " form must be desugared"

@@ -50,10 +50,10 @@ data SexpF f = -- Define Symbol [Symbol] f
              | Debug f
              | Break
              | TailCall Symbol [f] -- ^ will be introduced by transformation
+             | TailExit f
              | Reference Symbol
              {- | Quote f -}
              | Constant Literal
-             | Recur f f [f] -- ^ cond, return value, recursion args; tail-calls current function with provided set of arguments
              deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Sexp = Fix SexpF

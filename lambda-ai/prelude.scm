@@ -7,9 +7,11 @@
 
 ;; unsafe when index is out of bounds
 (define (nth i xs)
-  (if-then-recur (== i 0)
-                 (car xs)
-                 ((- i 1) (cdr xs))))
+  (letrec ((go (lambda (i xs)
+                  (if (== i 0)
+                      (car xs)
+                      (tailcall go (- i 1) (cdr xs))))))
+    (go i xs)))
 
 ;; (x,y) -> (y,x)
 (define (swap tuple)
@@ -50,10 +52,10 @@
       (f (car xs) (foldr f acc (cdr xs)))))
 
 (define (length xs)
-  (let ((iter (lambda (xs n)
-                (if-then-recur (nil? xs)
-                               n
-                               ((cdr xs) (+ n 1))))))
+  (letrec ((iter (lambda (xs n)
+                   (if (nil? xs)
+                       n
+                       (tailcall iter (cdr xs) (+ n 1))))))
     (iter xs 0)))
 
 ;; Debug helpers
