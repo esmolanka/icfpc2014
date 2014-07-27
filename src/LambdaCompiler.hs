@@ -15,6 +15,7 @@ import LispMachine.Print
 
 import Scheme.Backend
 import Scheme.Frontend
+import Scheme.Types
 
 compile :: T.Text -> Either String String
 compile = parseSexp
@@ -36,7 +37,7 @@ debugScheme src = do
   putStrLn "\n----\n"
   let optimized = optimize . desugar $ parsed
   putStrLn "Optimized: "
-  print optimized
+  T.putStrLn $ showSchemeProg optimized
   putStrLn "\n----\n"
   let compiled = either error id $ compileProg optimized
   putStrLn "Compiled: "
