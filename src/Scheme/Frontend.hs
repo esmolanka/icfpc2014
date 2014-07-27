@@ -124,6 +124,15 @@ parseSexp input =
         analyzeBinding :: S.Sexp -> (Symbol, S.Sexp)
         analyzeBinding (S.List [S.Atom x, y]) = (mkSymbol x, y)
         analyzeBinding b = error $ "invalid let binding: " ++ show b
+    coalg form@(S.List (S.Atom "letrec": rest)) =
+      case rest of
+        S.List bindings: body ->
+          LetRec (map analyzeBinding bindings) body
+        _ -> error $ "invalid letrec form: " ++ show form
+      where
+        analyzeBinding :: S.Sexp -> (Symbol, S.Sexp)
+        analyzeBinding (S.List [S.Atom x, y]) = (mkSymbol x, y)
+        analyzeBinding b = error $ "invalid let binding: " ++ show b
     coalg form@(S.List (S.Atom "let*": rest)) =
       case rest of
         S.List bindings: body ->
@@ -295,7 +304,11 @@ collectRefs = cata alg
       (F.fold body <> F.foldMap snd bindings) `S.difference` boundNames
       where
         boundNames              = S.fromList $ map fst bindings
-    alg (LetStar bindings body) = error "collectRefs: let* not supported, should be desugared"
+    alg (LetRec bindings body)  =
+      (F.fold body <> F.foldMap snd bindings) `S.difference` boundNames
+      where
+        boundNames              = S.fromList $ map fst bindings
+    alg (LetStar _ _)           = error "collectRefs: let* not supported, should be desugared"
     alg e                       = F.fold e
 
 constNil :: SexpF a
