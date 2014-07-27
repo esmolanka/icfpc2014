@@ -17,6 +17,7 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 import Data.Char
 import qualified Data.Foldable as F
 import Data.List
+import Data.Maybe
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Monoid
@@ -262,25 +263,26 @@ desugar prog =
         alg form         = Fix form
 
 optimize :: SchemeProg -> SchemeProg
-optimize prog = map (fmap (map (optimizeExpr . inlineSingularBindings . optimizeExpr))) prog
+optimize prog =
+  map (\func -> fmap (map (optimizeExpr False . inlineSingularBindings (defName func) . optimizeExpr True)) func) prog
   where
     inlinableFunctions = -- M.empty
       M.fromList $
       map (defName &&& id) $
       filter (\def -> defInlinable def || sum (map exprSize (defBody def)) <= 15) prog
 
-    optimizeExpr :: Sexp -> Sexp
-    optimizeExpr = cata alg
+    optimizeExpr :: Bool -> Sexp -> Sexp
+    optimizeExpr inlineEnabled = cata alg
       where
         alg :: SexpF Sexp -> Sexp
         alg (If (Fix (Not z)) x y) = Fix $ If z y x
         alg (If (Fix (Constant (LiteralBool True))) x _)  = x
         alg (If (Fix (Constant (LiteralBool False))) _ y) = y
         alg (Begin [x])                                   = x
-        alg (Let [] xs)                                   = optimizeExpr $ Fix $ Begin xs
+        alg (Let [] xs)                                   = optimizeExpr inlineEnabled $ Fix $ Begin xs
         alg (Not (Fix (Not x)))                           = x
         alg form@(Call (Fix (Reference name)) argVals)
-          | M.member name inlinableFunctions =
+          | inlineEnabled && M.member name inlinableFunctions =
             let (Define _ args body _ _) = inlinableFunctions M.! name
             in
             if length args /= length argVals
@@ -292,8 +294,8 @@ optimize prog = map (fmap (map (optimizeExpr . inlineSingularBindings . optimize
           | otherwise = Fix form
         alg e                      = Fix e
 
-    inlineSingularBindings :: Sexp -> Sexp
-    inlineSingularBindings = cata alg
+    inlineSingularBindings :: Symbol -> Sexp -> Sexp
+    inlineSingularBindings _func = cata alg
       where
         alg :: SexpF Sexp -> Sexp
         alg (Let bindings body) =
@@ -304,13 +306,24 @@ optimize prog = map (fmap (map (optimizeExpr . inlineSingularBindings . optimize
             refUses :: Map Symbol Int
             refUses    = foldr (M.unionWith (+)) M.empty $ map collectRefUses body
             singularRefs :: Set Symbol
-            singularRefs = S.fromList $ map fst $ filter ((== 1) . snd) $ M.toList refUses
+            singularRefs = S.fromList $
+                           map fst $
+                           filter isSingular $
+                           filter (\(var, _) -> isJust $ lookup var bindings) $
+                           M.toList refUses
+              where
+                isSingular :: (Symbol, Int) -> Bool
+                isSingular (var, uses) = uses == 1 ||
+                                         isReference (fromJust (lookup var bindings))
+                isReference :: Sexp -> Bool
+                isReference (Fix (Reference _)) = True
+                isReference _                   = False
 
             (singleBindings, otherBindings) = partition (\(name, _) -> S.member name singularRefs)
                                                         bindings
             inlinedBody = foldr (\(name, initExpr) body' -> map (inline name initExpr) body')
-                                      body
-                                      singleBindings
+                                body
+                                singleBindings
 
             inline :: Symbol -> Sexp -> Sexp -> Sexp
             inline sym val = cata inlineAlg
