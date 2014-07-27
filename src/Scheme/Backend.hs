@@ -204,6 +204,30 @@ compileExpr = para alg
          mapM_ fst body
          rtn
 
+
+    alg (LetRec bindings body) = do
+      -- handle let as usual in scheme:
+      -- (let ((foo 1)
+      --       (bar 2))
+      --   (body foo bar))
+      -- =>
+      -- ((lambda (foo bar)
+      --     (body foo bar))
+      --  1
+      --  2))
+      -- TODO: move it into desugaring phase
+      label <- mkNamedLabel "let_body"
+      withFrameForArgs (map fst bindings) $ do
+        dum (length bindings)
+        mapM_ (\(var, (initExpr, _)) -> annotate ("let " ++ (T.unpack $ getSymbol var)) >> initExpr) bindings
+        -- make closure and call it
+        ldf label
+        annotate "to let body" >> rap (length bindings)
+        --withFrameForArgs [] $
+        standaloneBlock label $ do
+          mapM_ fst body
+          rtn
+
     alg (If (c, _) (t, _) (f, _)) = do
       trueLabel <- mkNamedLabel "true_br"
       falseLabel <- mkNamedLabel "false_br"
@@ -251,7 +275,7 @@ compileExpr = para alg
       annotate "call"
       ap $ length args
 
-    alg form@(Recur (cond,_) (true,_) args) = do
+    alg form@(Recur (cond,_) (true,_) (clos':args)) = do
       (name, argcount, _) <- asks (head . getCalls . callEnv)
       when (length args /= argcount) $
            throwError $ "While recuring, function " ++ show (getSymbol name) ++ " expects " ++ show argcount ++
@@ -263,7 +287,9 @@ compileExpr = para alg
       standaloneBlock trivLabel (true >> rtn)
       standaloneBlock recurLabel $ do
         mapM_ fst args
-        (n,i) <- resolveVar (Symbol "lambda-closure")
+        (n,i) <- case snd clos' of
+                   (Fix (Reference clos)) -> resolveVar clos
+                   _ -> throwError "if-then-recur: first argument of continuation must be symbol"
         ld n i
         annotate "jump" >> tap (length args)
 

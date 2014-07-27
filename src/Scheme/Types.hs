@@ -34,6 +34,7 @@ data SexpF f = -- Define Symbol [Symbol] f
              | Div f f
              | Assign Symbol f
              | Let [(Symbol, f)] [f] -- ^ parallel let
+             | LetRec [(Symbol, f)] [f] -- ^ recursive let
              | LetStar [(Symbol, f)] [f] -- ^ sequential let
              | And f f
              | Or f f
