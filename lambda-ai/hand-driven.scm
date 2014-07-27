@@ -25,7 +25,7 @@
 ;; Harness
 
 (define (main world undocumented)
-  (cons +down+ step))
+  (cons (cons 0 +down+) step))
 
 ;; Step function
 
@@ -33,9 +33,17 @@
   (let* ((wmap (world-map world))
          (lman (lm-status world))
          (loc (lm-location lman))
-         (prev-direction state)
-         (dir (hand-driven prev-direction loc 0 wmap)))
-    (cons dir dir)))
+
+         (prev-direction (cdr state))
+         (curr-time (car state))
+
+         (next-time (+ 1 curr-time))
+
+         (hand (let* ((r (div curr-time 25))
+                      (h (mod r 2)))
+                 h))
+         (dir (hand-driven prev-direction loc hand wmap)))
+    (cons (cons next-time dir) dir)))
 
 ;; Algo itself
 
