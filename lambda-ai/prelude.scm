@@ -63,6 +63,17 @@
       acc
       (f (car xs) (foldr f acc (cdr xs)))))
 
+(define (foldl f acc xs)
+  (letrec ((go (lambda (acc xs)
+                 (if (nil? xs)
+                     acc
+                     (tailcall go (f acc (car xs)) (cdr xs))))))
+    (go acc xs)))
+
+(define (reverse lst) (foldl (lambda (x y) (cons y x)) 0 lst))
+
+(define (sum xs) (foldl (lambda (a b) (+ a b)) 0 xs))
+
 (define (length xs)
   (letrec ((iter (lambda (xs n)
                    (if (nil? xs)
@@ -101,6 +112,9 @@
 (define (debug-it x)
   (debug x)
   x)
+
+(define (negate x)
+  (- 0 x))
 
 ;; Game helpers
 
