@@ -42,8 +42,8 @@
           (if (pred? (cdr colix-cell))
               (list (cons (car colix-cell) (car rowix-row)))
               +nil+))
-        (zip ys (cdr rowix-row))))
-     (zip xs wmap))))
+        (zip xs (cdr rowix-row))))
+     (zip ys wmap))))
 
 (define (power-pills-positions wmap)
   (filter-wmap (lambda (c) (== +power-pill+ c)) wmap))
