@@ -10,6 +10,7 @@ import Control.Applicative
 import qualified Data.Text.Lazy as T
 import qualified Data.Text.Lazy.IO as T
 
+import LispMachine.Instructions
 import LispMachine.Flatten
 import LispMachine.Print
 
@@ -39,9 +40,9 @@ debugScheme src = do
   putStrLn "Optimized: "
   T.putStrLn $ showSchemeProg optimized
   putStrLn "\n----\n"
-  let compiled = either error id $ compileProg optimized
+  let (Program compiled) = either error id $ compileProg optimized
   putStrLn "Compiled: "
-  print compiled
+  mapM_ print compiled
 
 prelude :: FilePath
 prelude = "prelude.scm"
