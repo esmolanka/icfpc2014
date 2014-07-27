@@ -309,9 +309,16 @@ compileExpr enclosingFunc = para alg
             functionLabel name >>= ldf
           | constant ->
             resolveConstant name >>= compileExpr enclosingFunc
-          | otherwise -> throwError $ "unresolved reference " ++ show (getSymbol name) ++
-                         " while compiling function " ++ show (getSymbol enclosingFunc)
-
+          | otherwise -> do
+            frames <- asks (getEnv . variableEnv)
+            throwError $ "unresolved reference " ++ show (getSymbol name) ++
+              " while compiling function " ++ show (getSymbol enclosingFunc) ++ "\nframes:\n" ++
+              intercalate "\n" (showFrames frames)
+      where
+        showFrames = map (\frame -> intercalate "\n" $
+                          map (\(name, n) -> "    " ++ show (getSymbol name) ++ " " ++ show n) $
+                          M.toList $
+                          getFrame frame)
     alg (Constant (LiteralInt n)) = do
       ldc n
 
