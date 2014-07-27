@@ -1,20 +1,76 @@
 (define +done+ 42)
 
+;; modes
+(define +search+ 0)
+(define +cycle-break+ 1)
+
+(define +cycle-limit+ 50)
+(define +hand-limit+ 15)
+
+(define (loc= loc-a loc-b)
+  (and (== (car loc-a) (car loc-b))
+       (== (cdr loc-a) (cdr loc-b))))
+
 (define (main world undoc)
   (cons
-   (cons +down+ (power-pills-positions (world-map world))) step))
+   (list +down+
+         (cons 0 0)
+         0
+         0
+         +search+
+         (interesting-objects (world-map world)))
+   step))
 
 (define (step state world)
   (let* ((wmap (world-map world))
          (lman (lm-status world))
          (loc (lm-location lman))
-         (curr-dir (car state))
-         (curr-pill (first (cdr state)))
+
+         (curr-dir (first state))
+         (period-start (second state))
+         (period-counter (third state))
+         (hand-counter (fourth state))
+         (mode (fifth state))
+         (all-pills (nth 5 state))
+         (curr-pill (first all-pills))
+
+         (gstatus (ghost-status world))
+
+         (period-start-new
+          (if (== period-counter 0)
+              loc period-start))
+
+         (mode-new
+          (if (== mode +search+)
+              (if (and (> period-counter 0) (loc= period-start loc)) +cycle-break+ +search+)
+              (if (> hand-counter +hand-limit+) +search+ +cycle-break+)))
+
+         (period-counter-new
+          (if (== mode +search+)
+              (mod (+ 1 period-counter) +cycle-limit+) 0))
+
+         (hand-counter-new
+          (if (== mode +cycle-break+)
+              (+ 1 hand-counter) 0))
+
          (neighbors (free-neighbors wmap loc))
-         (dir (get-dir wmap loc curr-pill curr-dir neighbors)))
-    (if (== dir +done+)
-        (cons (cons dir (cdr (cdr state))) +up+)
-        (cons (cons dir (cdr state)) dir))))
+
+         (dir (get-dir wmap loc curr-pill curr-dir neighbors mode-new))
+         (safe-dir (safe-direction dir loc (get-loc-in-direction loc dir) (ghost-locations wmap gstatus))))
+
+    (debug (list mode (length all-pills) curr-pill))
+
+    (cons
+
+     (list
+      safe-dir
+      period-start-new
+      period-counter-new
+      hand-counter-new
+      mode-new
+      (filter (lambda (x) (not (loc= x loc))) all-pills))
+
+     (if (== dir +done+) +up+ safe-dir))))
 
 (define (free-neighbors wmap xy)
   (concat
@@ -41,21 +97,24 @@
   (and (== (car from) (car to))
        (== (cdr from) (cdr to))))
 
-(define (get-dir wmap from to curr-dir neighbors)
-  (let ((n (debug-it (length neighbors))))
+(define (get-dir wmap from to curr-dir neighbors mode)
+  (cond
+   ((== mode +cycle-break+) (hand-driven curr-dir from 1 wmap))
+   (#t (search-driven wmap from to curr-dir neighbors))))
+
+(define (search-driven wmap from to curr-dir neighbors)
+  (let ((n (length neighbors)))
     (if (done? from to)
         +done+
 
         (cond
          ((== n 1) (opposite curr-dir)) ;; dead end
          ((== n 2) (other curr-dir neighbors)) ;; corridor
-         ((== n 3)
-                          ;; 3-junction
+         ((== n 3) ;; 3-junction
           (let ((dir (dir-to-target from to)))
             (if (== +wall+ (next-cell wmap from dir))
                 (opposite curr-dir) ;; turn back if we hit the wall
                 dir)))
-          ;; (dir-to-target from to))
          (#t (dir-to-target from to)))))) ;; 4-junction
 
 (define (dir-to-target from to)
@@ -88,3 +147,37 @@
 
 (define (power-pills-positions wmap)
   (filter-wmap (lambda (c) (== +power-pill+ c)) wmap))
+
+(define (interesting-objects wmap)
+  (let ((power-pills (filter-wmap (lambda (c) (== +power-pill+ c)) wmap))
+        (pills (filter-wmap (lambda (c) (== +pill+ c)) wmap)))
+    (append power-pills pills)))
+
+;; ghost-locations :: [Ghost] -> [Location]
+(define (ghost-locations wmap ghosts)
+  (concat-map (lambda (ghost)
+                (let ((loc (gh-location ghost)))
+                  (filter (lambda (loc)
+                            (non-blocked? wmap loc))
+                          (list (get-up loc)
+                                (get-down loc)
+                                (get-right loc)
+                                (get-left loc)))))
+              ghosts))
+
+;; update-step :: Direction -> Location -> [Location] -> Direction
+(define (safe-direction curr-dir curr-loc next-loc ghost-locations)
+  (if (member-by loc= next-loc ghost-locations)
+      (let ((new-dirs
+             (filter (lambda (dir)
+                       (let ((new-loc
+                              (get-loc-in-direction curr-loc dir)))
+                         (not (member-by loc= new-loc ghost-locations))))
+                     (list +left+
+                           +right+
+                           +down+
+                           +up+))))
+        (if (nil? new-dirs)
+            curr-dir
+            (car new-dirs)))
+      curr-dir))

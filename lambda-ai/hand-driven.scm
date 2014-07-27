@@ -1,16 +1,16 @@
 ;; Helpers
 
-(define (get-up xy)
-  (cons (car xy) (- (cdr xy) 1)))
+;; (define (get-up xy)
+;;   (cons (car xy) (- (cdr xy) 1)))
 
-(define (get-down xy)
-  (cons (car xy) (+ (cdr xy) 1)))
+;; (define (get-down xy)
+;;   (cons (car xy) (+ (cdr xy) 1)))
 
-(define (get-left xy)
-  (cons (- (car xy) 1) (cdr xy)))
+;; (define (get-left xy)
+;;   (cons (- (car xy) 1) (cdr xy)))
 
-(define (get-right xy)
-  (cons (+ (car xy) 1) (cdr xy)))
+;; (define (get-right xy)
+;;   (cons (+ (car xy) 1) (cdr xy)))
 
 (define (get-loc-in-direction xy direction)
   (cond ((== direction +up+)
@@ -24,26 +24,26 @@
 
 ;; Harness
 
-(define (main world undocumented)
-  (cons (cons 0 +down+) step))
+;; (define (main world undocumented)
+;;   (cons (cons 0 +down+) step))
 
 ;; Step function
 
-(define (step state world)
-  (let* ((wmap (world-map world))
-         (lman (lm-status world))
-         (loc (lm-location lman))
+;; (define (step state world)
+;;   (let* ((wmap (world-map world))
+;;          (lman (lm-status world))
+;;          (loc (lm-location lman))
 
-         (prev-direction (cdr state))
-         (curr-time (car state))
+;;          (prev-direction (cdr state))
+;;          (curr-time (car state))
 
-         (next-time (+ 1 curr-time))
+;;          (next-time (+ 1 curr-time))
 
-         (hand (let* ((r (div curr-time 5))
-                      (h (mod r 2)))
-                 h))
-         (dir (hand-driven prev-direction loc hand wmap)))
-    (cons (cons next-time dir) dir)))
+;;          (hand (let* ((r (div curr-time 5))
+;;                       (h (mod r 2)))
+;;                  h))
+;;          (dir (hand-driven prev-direction loc hand wmap)))
+;;     (cons (cons next-time dir) dir)))
 
 ;; Algo itself
 
