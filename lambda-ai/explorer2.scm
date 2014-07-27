@@ -1,18 +1,6 @@
 (define (main world undocumented)
   (cons (cons +up+ +nil+) step))
 
-(define (get-up xy)
-  (cons (car xy) (- (cdr xy) 1)))
-
-(define (get-down xy)
-  (cons (car xy) (+ (cdr xy) 1)))
-
-(define (get-left xy)
-  (cons (- (car xy) 1) (cdr xy)))
-
-(define (get-right xy)
-  (cons (+ (car xy) 1) (cdr xy)))
-
 (define (get-loc-in-direction xy direction)
   (cond ((== direction +up+)
          (get-up xy))

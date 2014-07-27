@@ -266,3 +266,21 @@
 (define +down+ 2)
 (define +left+ 3)
 
+(define (opposite dir)
+  (cond ((== dir +left+) +right+)
+        ((== dir +right+) +left+)
+        ((== dir +down+) +up+)
+        (#t +down+)))
+
+
+(define (get-up xy)
+  (cons (car xy) (- (cdr xy) 1)))
+
+(define (get-down xy)
+  (cons (car xy) (+ (cdr xy) 1)))
+
+(define (get-left xy)
+  (cons (- (car xy) 1) (cdr xy)))
+
+(define (get-right xy)
+  (cons (+ (car xy) 1) (cdr xy)))

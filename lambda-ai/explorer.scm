@@ -1,18 +1,6 @@
 (define (main world undocumented)
   (cons 0 step))
 
-(define (get-up xy)
-  (cons (car xy) (- (cdr xy) 1)))
-
-(define (get-down xy)
-  (cons (car xy) (+ (cdr xy) 1)))
-
-(define (get-left xy)
-  (cons (- (car xy) 1) (cdr xy)))
-
-(define (get-right xy)
-  (cons (+ (car xy) 1) (cdr xy)))
-
 (define (step state world)
   (let* ((wmap (world-map world))
          (lman (lm-status world))
