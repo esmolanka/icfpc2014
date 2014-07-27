@@ -89,7 +89,7 @@ resolveVar ref = do
     go :: [Frame] -> [Frame] -> Int -> (Int, Int)
     go frames []     n =
       error $ "unresolved reference " ++ (T.unpack $ getSymbol ref) ++
-      ": no encsoling binding place found after checking " ++ show n ++ " frames\nframes: " ++ show frames
+      ": no enclosing binding place found after checking " ++ show n ++ " frames\nframes: " ++ show frames
     go frames (f:fs) n =
       maybe (go frames fs $ n + 1) (\k -> (n, k)) $ M.lookup ref $ getFrame f
 
@@ -157,12 +157,12 @@ compileExpr = para alg
   where
     alg :: SexpF (CompileM (), Fix SexpF) -> CompileM ()
     alg (Lambda args body) = do
-      label <- mkNamedLabel "lam"
+      label    <- mkNamedLabel "lam"
       ldf label
-      withCall (Symbol "<lambda>") (length args) label $ withFrameForArgs args $
-        standaloneBlock label $ do
-         mapM_ fst body
-         rtn
+      withFrameForArgs args
+        $ withCall (Symbol "<lambda>") (length args) label
+        $ standaloneBlock label
+        $ mapM_ fst body >> rtn
 
     alg (Cons (x, _) (y, _)) =
       x >> y >> cons
@@ -252,7 +252,7 @@ compileExpr = para alg
       ap $ length args
 
     alg form@(Recur (cond,_) (true,_) args) = do
-      (name, argcount, label) <- asks (head . getCalls . callEnv)
+      (name, argcount, _) <- asks (head . getCalls . callEnv)
       when (length args /= argcount) $
            throwError $ "While recuring, function " ++ show (getSymbol name) ++ " expects " ++ show argcount ++
                       " arguments: \n" ++ show (fmap snd form)
@@ -263,7 +263,8 @@ compileExpr = para alg
       standaloneBlock trivLabel (true >> rtn)
       standaloneBlock recurLabel $ do
         mapM_ fst args
-        ldf label
+        (n,i) <- resolveVar (Symbol "lambda-closure")
+        ld n i
         annotate "jump" >> tap (length args)
 
     alg (Debug (x, _)) =

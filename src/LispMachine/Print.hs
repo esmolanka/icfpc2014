@@ -37,7 +37,7 @@ ppAnnotatedInstr (AnnotatedInstruction i mlbl mcomment) =
                   (maybe (text "") text mcomment)
     in
     vcat $ concat [ if isJust mlbl then [ text "" ] else []
-                  , [ indent 4 (ppInstr i) <+> if (isJust mlbl || isJust mcomment) then ppComment comment else empty ]
+                  , [ ppInstr i <+> if (isJust mlbl || isJust mcomment) then ppComment comment else empty ]
                   ]
 
 ppInstr :: Instruction AnnotatedAddr -> Doc
