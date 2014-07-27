@@ -13,9 +13,35 @@
                       (tailcall go (- i 1) (cdr xs))))))
     (go i xs)))
 
+(define (div x y) (/ x y))
+(define (mod x y) (- x (* y (div x y))))
 
 (define (manhattan-distance x y)
-  (+ x y))
+  (+ (abs (- (car x) (car y)))
+     (abs (- (cdr x) (cdr y)))))
+
+(define (minimum-by f xs)
+  (letrec ((go (lambda (xs min min-y)
+                 (if (nil? xs)
+                     min
+                     (let* ((x (car xs))
+                            (new-min-y (f x)))
+                       (if (> min-y new-min-y)
+                           (tailcall go
+                                     (cdr xs)
+                                     x
+                                     new-min-y)
+                           (tailcall go
+                                     (cdr xs)
+                                     min
+                                     min-y))
+                       (tailcall go
+                                 (cdr xs)
+                                 ))))))
+    (let ((x (car xs)))
+      (if (nil? xs)
+          +nil+
+          (go (cdr xs) x (f x))))))
 
 (define (member-by eq-pred x xs)
   (cond ((nil? xs)
@@ -181,6 +207,10 @@
   (or (pill? wmap xy)
       (or (power-pill? wmap xy)
           (fruit? wmap xy))))
+
+(define (useful-now? wmap xy)
+  (or (pill? wmap xy)
+      (power-pill? wmap xy)))
 
 (define (non-blocked? wmap xy)
   (not (== +wall+ (map-cell wmap xy))))
