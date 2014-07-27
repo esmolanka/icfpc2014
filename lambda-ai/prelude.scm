@@ -208,6 +208,10 @@
       (or (power-pill? wmap xy)
           (fruit? wmap xy))))
 
+(define (useful-now? wmap xy)
+  (or (pill? wmap xy)
+      (power-pill? wmap xy)))
+
 (define (non-blocked? wmap xy)
   (not (== +wall+ (map-cell wmap xy))))
 
