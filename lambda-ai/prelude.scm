@@ -1,9 +1,12 @@
 ;; Tuple/lists accessors
-(define (first xs) (car xs))
-(define (second xs) (car (cdr xs)))
-(define (third xs) (car (cdr (cdr xs))))
-(define (fourth xs) (car (cdr (cdr (cdr xs)))))
-(define (fifth xs) (car (cdr (cdr (cdr (cdr xs))))))
+(define (first xs)   (car xs))
+(define (second xs)  (car (cdr xs)))
+(define (third xs)   (car (cdr (cdr xs))))
+(define (fourth xs)  (car (cdr (cdr (cdr xs)))))
+(define (fifth xs)   (car (cdr (cdr (cdr (cdr xs))))))
+(define (sixth xs)   (car (cdr (cdr (cdr (cdr (cdr xs))))))
+(define (seventh xs) (car (cdr (cdr (cdr (cdr (cdr (cdr xs))))))
+(define (eights xs)  (car (cdr (cdr (cdr (cdr (cdr (cdr (cdr xs))))))
 
 ;; unsafe when index is out of bounds
 (define (nth i xs)
@@ -83,6 +86,13 @@
           (cons (car xs) (filter pred (cdr xs)))
           (filter pred (cdr xs)))))
 
+(define (filter-tco pred xs)
+  (let ((go (lambda (ys y)
+              (if (pred y)
+                  (cons y ys)
+                  ys))))
+    (reverse (foldl go +nil+ xs))))
+
 ;; uses Haskell foldr argument order
 (define (foldr f acc xs)
   (if (nil? xs)
@@ -96,7 +106,7 @@
                      (tailcall go (f acc (car xs)) (cdr xs))))))
     (go acc xs)))
 
-(define (reverse lst) (foldl (lambda (x y) (cons y x)) 0 lst))
+(define (reverse lst) (foldl (lambda (ys y) (cons y ys)) 0 lst))
 
 (define (sum xs) (foldl (lambda (a b) (+ a b)) 0 xs))
 
