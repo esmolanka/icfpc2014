@@ -157,7 +157,7 @@ compileExpr enclosingFunc = para alg
   where
     alg :: SexpF (CompileM (), Fix SexpF) -> CompileM ()
     alg (Lambda args body) = do
-      label    <- mkNamedLabel "lam"
+      label <- mkNamedLabel "lam"
       ldf label
       withFrameForArgs args
         $ withCall (Symbol "<lambda>") (length args) label
@@ -277,6 +277,7 @@ compileExpr enclosingFunc = para alg
           when (length args /= argcount) $
                throwError $ "Lambda expects " ++ show argcount ++
                               " arguments: \n" ++ show (fmap snd form)
+          x
         _ -> x -- x must add closure cell on the stack
       annotate "call"
       ap $ length args
