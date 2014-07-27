@@ -1,26 +1,26 @@
 ;; Helpers
 
-(define (get-up rowcol)
-  (cons (- (car rowcol) 1) (cdr rowcol)))
+(define (get-up xy)
+  (cons (car xy) (- (cdr xy) 1)))
 
-(define (get-down rowcol)
-  (cons (+ (car rowcol) 1) (cdr rowcol)))
+(define (get-down xy)
+  (cons (car xy) (+ (cdr xy) 1)))
 
-(define (get-left rowcol)
-  (cons (car rowcol) (- (cdr rowcol) 1)))
+(define (get-left xy)
+  (cons (- (car xy) 1) (cdr xy)))
 
-(define (get-right rowcol)
-  (cons (car rowcol) (+ (cdr rowcol) 1)))
+(define (get-right xy)
+  (cons (+ (car xy) 1) (cdr xy)))
 
-(define (get-loc-in-direction rowcol direction)
+(define (get-loc-in-direction xy direction)
   (cond ((== direction +up+)
-         (get-up rowcol))
+         (get-up xy))
         ((== direction +down+)
-         (get-down rowcol))
+         (get-down xy))
         ((== direction +left+)
-         (get-left rowcol))
+         (get-left xy))
         ((== direction +right+)
-         (get-right rowcol))))
+         (get-right xy))))
 
 ;; Harness
 
@@ -32,7 +32,7 @@
 (define (step state world)
   (let* ((wmap (world-map world))
          (lman (lm-status world))
-         (loc (swap (lm-location lman)))
+         (loc (lm-location lman))
          (prev-direction state)
          (dir (hand-driven prev-direction loc 0 wmap)))
     (cons dir dir)))
