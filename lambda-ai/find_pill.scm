@@ -4,7 +4,7 @@
 (define +search+ 0)
 (define +cycle-break+ 1)
 
-(define +cycle-limit+ 50)
+(define +cycle-limit+ 30)
 (define +hand-limit+ 15)
 
 (define (loc= loc-a loc-b)
