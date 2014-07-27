@@ -139,9 +139,9 @@ compileProg prog =
 --   (cons (cons 0 world) (make-closure step)))
 
 compileFunc :: Definition -> CompileM ()
-compileFunc (Define (Symbol "main") args body _ _) = do
-  withCall (Symbol "main") 2 (RRef "main" 0) $ withFrameForArgs args $ do
-    mapM_ compileExpr body
+compileFunc (Define name@(Symbol "main") args body _ _) = do
+  withCall name 2 (RRef "main" 0) $ withFrameForArgs args $ do
+    mapM_ (compileExpr name) body
     rtn
 compileFunc (Define name args body _isInlinable isConst) = do
   when isConst $ error $ "cannot compile constant as a function: " ++ show (getSymbol name)
@@ -149,11 +149,11 @@ compileFunc (Define name args body _isInlinable isConst) = do
   label <- functionLabel name
   block label $
     withCall name (length args) label $ withFrameForArgs args $ do
-      mapM_ compileExpr body
+      mapM_ (compileExpr name) body
       rtn
 
-compileExpr :: Sexp -> CompileM ()
-compileExpr = para alg
+compileExpr :: Symbol -> Sexp -> CompileM ()
+compileExpr enclosingFunc = para alg
   where
     alg :: SexpF (CompileM (), Fix SexpF) -> CompileM ()
     alg (Lambda args body) = do
@@ -308,8 +308,9 @@ compileExpr = para alg
           | func -> do
             functionLabel name >>= ldf
           | constant ->
-            resolveConstant name >>= compileExpr
-          | otherwise -> throwError $ "unresolved reference: " ++ show (getSymbol name)
+            resolveConstant name >>= compileExpr enclosingFunc
+          | otherwise -> throwError $ "unresolved reference " ++ show (getSymbol name) ++
+                         " while compiling function " ++ show (getSymbol enclosingFunc)
 
     alg (Constant (LiteralInt n)) = do
       ldc n
