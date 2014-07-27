@@ -217,8 +217,8 @@ compileExpr enclosingFunc = para alg
           rtn
 
     alg (If (c, _) (t, tExp) (f, fExp)) = do
-      trueLabel <- mkNamedLabel "true_br"
-      falseLabel <- mkNamedLabel "false_br"
+      trueLabel <- mkNamedLabel $ getSymbol enclosingFunc `T.append` "_true_br"
+      falseLabel <- mkNamedLabel $ getSymbol enclosingFunc `T.append` "_false_br"
       annotate "condition" >> c
       case (isTailOp tExp, isTailOp fExp) of
         (True, True) -> do
@@ -286,7 +286,7 @@ compileExpr enclosingFunc = para alg
       mapM_ fst args
       (n,i) <- resolveVar clos
       ld n i
-      annotate "jump" >> tap (length args)
+      annotate ("jump to " ++ T.unpack (getSymbol clos)) >> tap (length args)
 
     alg (TailExit res) = do
       fst res
