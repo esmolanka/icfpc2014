@@ -21,18 +21,27 @@
      (abs (- (cdr x) (cdr y)))))
 
 (define (minimum-by f xs)
-  (letrec ((go (lambda (xs min)
-                  (if (nil? xs)
-                      min
-                      (let ((new-min (f (car xs))))
-                        (tailcall go
-                                  (cdr xs)
-                                  (if (> min new-min)
-                                      new-min
-                                      min)))))))
-    (if (nil? xs)
-        +nil+
-        (go (cdr xs) (f (car xs))))))
+  (letrec ((go (lambda (xs min min-y)
+                 (if (nil? xs)
+                     min
+                     (let* ((x (car xs))
+                            (new-min-y (f x)))
+                       (if (> min-y new-min-y)
+                           (tailcall go
+                                     (cdr xs)
+                                     x
+                                     new-min-y)
+                           (tailcall go
+                                     (cdr xs)
+                                     min
+                                     min-y))
+                       (tailcall go
+                                 (cdr xs)
+                                 ))))))
+    (let ((x (car xs)))
+      (if (nil? xs)
+          +nil+
+          (go (cdr xs) x (f x))))))
 
 (define (member-by eq-pred x xs)
   (cond ((nil? xs)
