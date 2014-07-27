@@ -13,6 +13,8 @@
                       (tailcall go (- i 1) (cdr xs))))))
     (go i xs)))
 
+(define (div x y) (/ x y))
+(define (mod x y) (- x (* y (div x y))))
 
 (define (manhattan-distance x y)
   (+ x y))
