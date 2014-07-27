@@ -65,12 +65,15 @@ data Cmd = Inc Arg
          | Hlt
          --
          | Labeled Label Program
+         | Comment Cmd String
          | JumpIf  Cmp Label
          | BreakIf Cmp Label
+         | Nop
   deriving Show
 
 flatten :: Program -> Program
-flatten (Program ps) = Program $ concatMap substCmdLabels ps
+flatten (Program ps) = commentProgram $
+                       Program $ concatMap substCmdLabels ps
   where
     substCmdLabels :: Cmd -> [Cmd]
     substCmdLabels (Labeled _label (Program ps)) =
@@ -91,7 +94,22 @@ flatten (Program ps) = Program $ concatMap substCmdLabels ps
     numberOfInstructions (Program cs) = sum $ map cmdSize cs
       where
         cmdSize (Labeled _ ps) = numberOfInstructions ps
+        cmdSize (Comment cmd _) = cmdSize cmd
         cmdSize _ = 1
+
+    allLabels :: Set.Set Int
+    allLabels = Set.fromList $
+                concatMap (\(x,y) -> [x,y]) $
+                Map.elems lMap
+
+    commentProgram (Program ps) =
+      Program $
+      map commentCmd $
+      zip [0..] ps
+
+    commentCmd (idx,cmd)
+      | idx `Set.member` allLabels = Comment cmd (show idx)
+      | otherwise = cmd
 
     lMap :: Map.Map Label (Int,Int)
     lMap = labelMap 0 ps

@@ -99,6 +99,15 @@ ifte cmp t f = do
       gotoAfter label
     t
 
+absDiff :: Var -> Var -> GHCM ()
+absDiff x y =
+  ifte (x >: y)
+    (x `sub` y) $
+    withVar 0 $ \t -> do
+       t =: y
+       t `sub` x
+       x =: t
+
 if' :: Cmp -> GHCM () -> GHCM ()
 if' cmp t = ifte cmp t $ return ()
 
@@ -123,3 +132,6 @@ halt = cmd Hlt
 
 inifinity :: Int
 inifinity = 255
+
+comment :: String -> GHCM ()
+comment msg = cmd $ Comment Nop msg

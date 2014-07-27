@@ -52,6 +52,8 @@ instance Pretty Cmd where
 
     JumpIf  cmp (Label l) -> jumpPretty "j" l cmp
     BreakIf cmp (Label l) -> jumpPretty "b" l cmp
+    Comment cmd msg       -> pretty cmd ++ " ; " ++ msg
+    Nop                   -> pretty (And (ILit 0) (ILit 0))
 
 jumpPretty prefix label (Cmp op x y) =
   concat $ [ prefix
