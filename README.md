@@ -1,11 +1,11 @@
 ICFP Contest 2014
 =======
 
-LambdaMan vs Ghosts
+LambdaMan vs Ghosts.
 
-CoFree CoRiders team.
+Cofree Coriders team.
 
-* Eugene Smolanka
-* Sergey Vinokurov
-* Ivan Veselov
 * Anton Dubovik
+* Eugene Smolanka
+* Ivan Veselov
+* Sergey Vinokurov
