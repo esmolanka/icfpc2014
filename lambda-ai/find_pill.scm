@@ -42,7 +42,7 @@
 
          (mode-new
           (if (== mode +search+)
-              (if (and (> period-counter 0) (loc= period-start loc)) +cycle-break+ +search+)
+              (if (and (> period-counter 1) (loc= period-start loc)) +cycle-break+ +search+)
               (if (> hand-counter +hand-limit+) +search+ +cycle-break+)))
 
          (period-counter-new
@@ -56,9 +56,14 @@
          (neighbors (free-neighbors wmap loc))
 
          (dir (get-dir wmap loc curr-pill curr-dir neighbors mode-new))
-         (safe-dir (safe-direction dir loc (get-loc-in-direction loc dir) (ghost-locations wmap gstatus))))
 
-    (debug (list mode (length all-pills) curr-pill))
+         (dir2 (if (== +done+ dir) +up+ dir))
+
+         (safe-dir (safe-direction dir2 loc
+                                   (get-loc-in-direction loc dir2)
+                                   (ghost-locations wmap gstatus))))
+
+    (debug (list mode period-start loc dir safe-dir 1111111 (length all-pills) 11111111 curr-pill))
 
     (cons
 
@@ -70,7 +75,7 @@
       mode-new
       (filter (lambda (x) (not (loc= x loc))) all-pills))
 
-     (if (== dir +done+) +up+ safe-dir))))
+     safe-dir)))
 
 (define (free-neighbors wmap xy)
   (concat
@@ -159,25 +164,26 @@
                 (let ((loc (gh-location ghost)))
                   (filter (lambda (loc)
                             (non-blocked? wmap loc))
-                          (list (get-up loc)
-                                (get-down loc)
-                                (get-right loc)
-                                (get-left loc)))))
+                          (list
+                           loc
+                           (get-up loc)
+                           (get-down loc)
+                           (get-right loc)
+                           (get-left loc)))))
               ghosts))
 
-;; update-step :: Direction -> Location -> [Location] -> Direction
-(define (safe-direction curr-dir curr-loc next-loc ghost-locations)
-  (if (member-by loc= next-loc ghost-locations)
+;; safe-direction :: Direction -> Location -> [Location] -> Direction
+(define (safe-direction curr-dir curr-loc next-loc ghost-locs)
+  (debug (list curr-dir curr-loc next-loc ghost-locs))
+
+  (if (member-by loc= next-loc ghost-locs)
       (let ((new-dirs
              (filter (lambda (dir)
-                       (let ((new-loc
-                              (get-loc-in-direction curr-loc dir)))
-                         (not (member-by loc= new-loc ghost-locations))))
-                     (list +left+
-                           +right+
-                           +down+
-                           +up+))))
+                       (let ((new-loc (get-loc-in-direction curr-loc dir)))
+                         (not (member-by loc= new-loc ghost-locs))))
+                     (list +left+ +right+ +down+ +up+))))
         (if (nil? new-dirs)
             curr-dir
             (car new-dirs)))
       curr-dir))
+
